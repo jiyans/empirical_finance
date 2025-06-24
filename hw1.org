@@ -1,0 +1,371 @@
+#+AUTHOR: Jiyan Jonas Schneider (82202097) @@latex:\\@@ Graduate School of economics
+#+EMAIL:     jjs@jjs-gpu
+#+DATE:      2025-06-24 Tue
+#+LATEX_HEADER: \usepackage{fontspec}
+#+LATEX_HEADER: \usepackage[style=apa]{biblatex}
+#+LATEX_HEADER: \addbibresource{/Users/jiyanschneider/Dropbox/Documents/lib/bibliography/zotero.bib}
+#+BIBLIOGRAPHY: /Users/jiyanschneider/Dropbox/Documents/lib/bibliography/zotero.bib
+#+LATEX_HEADER: \setmainfont{Noto Serif CJK JP}
+#+LATEX_HEADER: \usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm]{geometry}
+#+LATEX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LATEX_HEADER: \lstdefinestyle{pythonstyle}{
+#+LATEX_HEADER:     language=Python,
+#+LATEX_HEADER:     basicstyle=\ttfamily\small,
+#+LATEX_HEADER:     keywordstyle=\color{blue},
+#+LATEX_HEADER:     stringstyle=\color{red},
+#+LATEX_HEADER:     commentstyle=\color{green!60!black},
+#+LATEX_HEADER:     morecomment=[l][\color{magenta}]{\#},
+#+LATEX_HEADER:     tabsize=2,
+#+LATEX_HEADER:     showstringspaces=false,
+#+LATEX_HEADER:     breaklines=true,
+#+LATEX_HEADER:     frame=single,
+#+LATEX_HEADER:     numbers=left,
+#+LATEX_HEADER:     numberstyle=\tiny\color{gray},
+#+LATEX_HEADER:     keywordcase=upper,
+#+LATEX_HEADER:     literate={-}{{\tt -}}1
+#+LATEX_HEADER: }
+#+LATEX_HEADER: \lstset{style=pythonstyle}
+
+#+TITLE:    Empirical Finance
+#+SUBTITLE: Homework 1
+#+OPTIONS: toc:nil
+* Homework 1
+:PROPERTIES:
+:header-args:python: :session emp_fin
+:END:
+*** Replicate second panel of table 2 from Fama-French (1993)
+Table 2 on page 11 says Summary statistics for the monthly dependent and explanatory returns (in percent) in the regressions of tables 3 to 8: July 1963 to December 1991, 342 observations. So the period we want is (1963, 6, 1) -> (1991, 12, 31). Not sure if we should be including or excluding the boundaries.
+
+#+begin_src python
+import polars as pl
+df = pl.read_csv("homework/homework_1/portfolios25.csv")
+df = df.with_columns(ym = pl.format("{}-{}", pl.col("year"), pl.col("month")))
+df.sort("year").head()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (5, 129)
+┌────────────┬────────────┬────────────┬────────────┬───┬──────┬───────┬──────────┬─────────┐
+│ s1b1_vwret ┆ s1b2_vwret ┆ s1b3_vwret ┆ s1b4_vwret ┆ … ┆ year ┆ month ┆ DATE     ┆ ym      │
+│ ---        ┆ ---        ┆ ---        ┆ ---        ┆   ┆ ---  ┆ ---   ┆ ---      ┆ ---     │
+│ f64        ┆ f64        ┆ f64        ┆ f64        ┆   ┆ i64  ┆ i64   ┆ i64      ┆ str     │
+╞════════════╪════════════╪════════════╪════════════╪═══╪══════╪═══════╪══════════╪═════════╡
+│ 0.058275   ┆ -0.017005  ┆ 0.005118   ┆ -0.021477  ┆ … ┆ 1926 ┆ 7     ┆ 19260731 ┆ 1926-7  │
+│ -0.020205  ┆ -0.080282  ┆ 0.013968   ┆ 0.021482   ┆ … ┆ 1926 ┆ 8     ┆ 19260831 ┆ 1926-8  │
+│ -0.04829   ┆ -0.026805  ┆ -0.043417  ┆ -0.032683  ┆ … ┆ 1926 ┆ 9     ┆ 19260930 ┆ 1926-9  │
+│ -0.093633  ┆ -0.035519  ┆ -0.035024  ┆ 0.034413   ┆ … ┆ 1926 ┆ 10    ┆ 19261030 ┆ 1926-10 │
+│ 0.055888   ┆ 0.041876   ┆ 0.024384   ┆ -0.044495  ┆ … ┆ 1926 ┆ 11    ┆ 19261130 ┆ 1926-11 │
+└────────────┴────────────┴────────────┴────────────┴───┴──────┴───────┴──────────┴─────────┘
+#+end_example
+
+
+This is my org file. I wanna submit this as a homework. Can you give me some tips so that itll look good? E.g., I would like that the tables are printed and nice latex. And that the code is highlighted etc.
+
+
+
+Your homework looks great so far! Here are a few tips to make it even better, focusing on presentation and ensuring it meets the requirements of a polished academic submission:
+
+*** LaTeX Presentation:
+
+1.  *Code Highlighting:* To get syntax highlighting for your Python code within LaTeX, you'll want to use the =listings= package. Add this to your LaTeX preamble (the part before =\begin{document}=):
+
+    #+begin_src latex
+    \usepackage{listings}
+    \usepackage{xcolor} % Required for the below color definitions
+
+    % Define the Python language highlighting
+    \lstdefinestyle{pythonstyle}{
+        language=Python,
+        basicstyle=\ttfamily\small,
+        keywordstyle=\color{blue},
+        stringstyle=\color{red},
+        commentstyle=\color{green!60!black},
+        morecomment=[l][\color{magenta}]{\#}, % For comments starting with #
+        tabsize=2,
+        showstringspaces=false,
+        breaklines=true,
+        frame=single, % Adds a frame around the code block
+        numbers=left, % Line numbers on the left
+        numberstyle=\tiny\color{gray}, % Style for line numbers
+        keywordcase=upper, % Or lower, depending on preference
+        literate={-}{{\tt -}}1 % Display hyphens correctly
+    }
+    \lstset{style=pythonstyle}
+    #+end_src
+
+    Then, wrap your code blocks like this:
+
+    #+begin_src latex
+    \begin{lstlisting}
+    import polars as pl
+    df = pl.read_csv("homework/homework_1/portfolios25.csv")
+    df = df.with_columns(ym = pl.format("{}-{}", pl.col("year"), pl.col("month")))
+    # ... your other code ...
+    \end{lstlisting}
+    #+end_src
+
+    /Note:/ You might need to adjust the colors and styles to your preference. =xcolor= package is needed for color definitions.
+
+2.  *Table Formatting:*
+    *   *Polars DataFrame to LaTeX:* Polars DataFrames have a built-in method to convert them to LaTeX tables. You can use =df.to_latex()=. However, for better control and integration with LaTeX, it's often best to use the =polars= library in conjunction with a LaTeX table generator. For simple tables, you can directly print the Polars output and let Org-mode handle the conversion. If you want more advanced control or if the default output isn't quite right, you can explicitly format it.
+    *   *Org-mode's Built-in Table Conversion:* Org-mode is excellent at handling tables. Make sure your =RESULTS= block is correctly formatted. If you want to ensure the output is treated as a table by LaTeX, you might need to configure Org-mode's export settings. In your =.emacs= or =init.el=, you can add:
+        #+begin_src emacs-lisp
+        (setq org-latex-tables-use-packages
+              '( ("booktabs" . "") ; Use booktabs for nicer table lines
+                 ("longtable" . "") ; If your tables might span pages
+                 ("array" . "")
+                 ("colortbl" . "")
+                 ))
+        #+end_src
+        Then ensure your table export format is set correctly. For most Org-mode setups, it should automatically convert results blocks into LaTeX tables. If it's not, you might need to explicitly tell Org-mode to export the =RESULTS= block as a table.
+
+3.  *Fama-French Replication:*
+    *   *Clarity:* Clearly state that you are replicating the second panel of Table 2 from Fama-French (1993).
+    *   *Data Source:* Mention the =portfolios25.csv= file as the source.
+    *   *Date Range:* Explicitly state the date range you are using (July 1963 to December 1991) and how you handled the boundaries (e.g., "inclusive of start and end months").
+    *   *Observations:* Confirm the number of observations used in your replication.
+
+*** Code and Data Handling Tips:
+
+1.  *Date Parsing:* While =ym= is created, ensure that you are correctly parsing dates if you intend to filter by date range later. Polars has excellent date/time capabilities. You might want to convert your =DATE= column (currently an integer) into a proper datetime object.
+
+    #+begin_src python
+    # Example of converting to datetime if DATE is in YYYYMMDD format
+    df = df.with_columns(
+        pl.col("DATE").cast(pl.String).str.strptime(pl.Date, "%Y%m%d").alias("date_col")
+    )
+    #+end_src
+
+    Then you can filter by date:
+    #+begin_src python
+    df_filtered = df.filter(
+        (pl.col("date_col") >= "1963-07-01") & (pl.col("date_col") <= "1991-12-31")
+    )
+    #+end_src
+    /Self-correction:/ Based on your provided =DATE= column values (e.g., =19260731=), they seem to be =YYYYMMDD=. The =strptime= format string ="%Y%m%d"= is correct for this.
+
+2.  *Column Selection:* The Fama-French paper likely focuses on specific columns. Ensure you are selecting only the relevant columns for your replication. If the =portfolios25.csv= file contains many more columns than are in the Fama-French table, you might want to explicitly select them.
+
+    For example, if you know the column names you need:
+    #+begin_src python
+    # Assuming 'sx1_vwret', 'sx2_vwret', etc. are the columns needed
+    columns_to_keep = ['sx1_vwret', 'sx2_vwret', 'sx3_vwret', 'sx4_vwret', 'sx5_vwret', 'sx6_vwret', 'sx7_vwret', 'sx8_vwret', 'sx9_vwret', 'sx10_vwret', 'sx11_vwret', 'sx12_vwret', 'sx13_vwret', 'sx14_vwret', 'sx15_vwret', 'sx16_vwret', 'sx17_vwret', 'sx18_vwret', 'sx19_vwret', 'sx20_vwret', 'sx21_vwret', 'sx22_vwret', 'sx23_vwret', 'sx24_vwret', 'sx25_vwret', 'MktRF', 'SMB', 'HML', 'RF'] # This is just an example, replace with actual columns from the paper.
+    df_selected = df_filtered.select(columns_to_keep)
+    #+end_src
+    You'll need to check the Fama-French paper for the exact column names and the set of factors they use (e.g., =Mkt-RF=, =SMB=, =HML=).
+
+3.  *Data Cleaning/Verification:* Double-check the data types and ensure there are no unexpected missing values (=null= or =NaN=) in the columns you're using for calculations. Polars makes this easy: =df.null_count()=.
+
+*** Org-mode Structure and Content:
+
+1.  *Headings:* Your use of =*= and =***= for headings is good. Ensure you have a clear structure for each part of the homework.
+2.  *Explanations:* Add brief explanations for your code. For instance, after reading the CSV, you could add a sentence like: "The following code reads the portfolio return data from =portfolios25.csv=."
+3.  *Intermediate Results:* For a homework assignment, it can be beneficial to show intermediate steps or results, especially if they help demonstrate your understanding. For example, showing the =.head()= output is good. If you perform filtering or column selection, you could show a =.head()= of the resulting DataFrame as well.
+4.  *Citations:* Make sure your citation of Fama-French (1993) is properly formatted within your LaTeX document, likely using =biblatex= as you've included in your header.
+
+*** Example of an Improved Section:
+
+#+begin_src org
+#+AUTHOR: Jiyan Jonas Schneider (82202097) @@latex:\@@ Graduate School of economics
+#+EMAIL:     jjs@jjs-gpu
+#+DATE:      2025-06-24 Tue
+#+LATEX_HEADER: \usepackage{fontspec}
+#+LATEX_HEADER: \usepackage[style=apa]{biblatex}
+#+LATEX_HEADER: \addbibresource{/Users/jiyanschneider/Dropbox/Documents/lib/bibliography/zotero.bib}
+#+BIBLIOGRAPHY: /Users/jiyanschneider/Dropbox/Documents/lib/bibliography/zotero.bib
+#+LATEX_HEADER: \setmainfont{Noto Serif CJK JP}
+#+LATEX_HEADER: \usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm]{geometry}
+#+LATEX_HEADER: \usepackage{listings}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LATEX_HEADER: \lstdefinestyle{pythonstyle}{
+#+LATEX_HEADER:     language=Python,
+#+LATEX_HEADER:     basicstyle=\ttfamily\small,
+#+LATEX_HEADER:     keywordstyle=\color{blue},
+#+LATEX_HEADER:     stringstyle=\color{red},
+#+LATEX_HEADER:     commentstyle=\color{green!60!black},
+#+LATEX_HEADER:     morecomment=[l][\color{magenta}]{\#},
+#+LATEX_HEADER:     tabsize=2,
+#+LATEX_HEADER:     showstringspaces=false,
+#+LATEX_HEADER:     breaklines=true,
+#+LATEX_HEADER:     frame=single,
+#+LATEX_HEADER:     numbers=left,
+#+LATEX_HEADER:     numberstyle=\tiny\color{gray},
+#+LATEX_HEADER:     keywordcase=upper,
+#+LATEX_HEADER:     literate={-}{{\tt -}}1
+#+LATEX_HEADER: }
+#+LATEX_HEADER: \lstset{style=pythonstyle}
+
+
+#+TITLE:    Empirical Finance
+#+SUBTITLE: Homework 1
+#+OPTIONS: toc:nil
+
+
+* Homework 1: Replication of Fama-French (1993) Table 2, Panel 2
+
+*** Objective
+The goal of this assignment is to replicate the second panel of Table 2 from Fama-French (1993), which presents summary statistics for monthly stock portfolio returns.
+
+*** Data Loading and Preparation
+
+The data is sourced from the `portfolios25.csv` file. We will focus on the period from July 1963 to December 1991, as specified in the paper. This period covers 342 monthly observations.
+
+#+BEGIN_SRC python
+import polars as pl
+
+# Load the dataset
+df = pl.read_csv("homework/homework_1/portfolios25.csv")
+
+# Create a 'ym' column for easier potential sorting/filtering by year and month
+df = df.with_columns(ym = pl.format("{}-{}", pl.col("year"), pl.col("month")))
+
+# Convert 'DATE' column to datetime objects for precise date filtering
+# Assuming DATE is in YYYYMMDD format
+df = df.with_columns(
+    pl.col("DATE").cast(pl.String).str.strptime(pl.Date, "%Y%m%d").alias("date_obj")
+)
+
+# Display the first 5 rows to verify loading and initial structure
+print(df.head())
+df
+#+END_SRC
+
+#+RESULTS:
+: None
+
+*** Data Filtering and Selection
+
+We filter the DataFrame to include only the specified date range (July 1963 to December 1991). The Fama-French paper focuses on specific portfolio sorts and factors. We will select these relevant columns.
+
+#+BEGIN_SRC python
+# Define the target date range based on Fama-French (1993)
+start_date = "1963-07-01"
+end_date = "1991-12-31"
+
+# Filter the DataFrame
+df_filtered = df.filter(
+    (pl.col("date_obj") >= start_date) & (pl.col("date_obj") <= end_date)
+)
+
+# Define the columns relevant to the Fama-French table replication
+# NOTE: You need to replace these with the ACTUAL column names from the paper and your CSV.
+# Common factors are Mkt-RF, SMB, HML, RF. Portfolio names might be like 's1b1_vwret', etc.
+# Based on your head() output, 's1b1_vwret' etc. are present.
+# You MUST consult Fama-French (1993) for the exact list of columns they used.
+ff_columns = [
+    # Example: Low-to-High size portfolios
+    's1b1_vwret', 's1b2_vwret', 's1b3_vwret', 's1b4_vwret', 's1b5_vwret',
+    # Example: Low-to-High book-to-market portfolios
+    's5b1_vwret', 's5b2_vwret', 's5b3_vwret', 's5b4_vwret', 's5b5_vwret',
+    # Factors
+    'MktRF', # Or 'Mkt-RF' depending on the CSV column name
+    'SMB',
+    'HML',
+    'RF' # Risk-Free Rate
+]
+
+# Select only the relevant columns
+# Ensure all columns in ff_columns actually exist in df_filtered
+try:
+    df_ff_replication = df_filtered.select(ff_columns)
+except Exception as e:
+    print(f"Error selecting columns: {e}")
+    print("Please ensure all column names in 'ff_columns' exist in your DataFrame.")
+    # Fallback: select all columns if ff_columns are not correct, for debugging
+    df_ff_replication = df_filtered
+
+
+# Display the first few rows of the filtered and selected data
+print("Filtered and Selected Data Head:")
+print(df_ff_replication.head())
+
+# Verify the number of observations
+print(f"\nNumber of observations in the filtered data: {df_filtered.shape[0]}")
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_EXAMPLE
+#+END_EXAMPLE
+
+*** Replication of Table 2, Panel 2
+
+This section presents the replicated summary statistics.
+#+CAPTION: Replicated Summary Statistics (Fama-French, 1993) - Panel 2
+#+LABEL: tab:ff_table2_panel2
+#+RESULTS:
+#+BEGIN_SRC polars :results latex :wrap table
+# This is where you would calculate the summary statistics.
+# For example, mean, std dev, min, max for each column.
+# You'll need to consult Fama-French (1993) Table 2 for the exact statistics they report.
+# It's likely to be mean, std dev, possibly min/max, and maybe number of observations.
+
+# Example: Calculate mean and standard deviation for the selected columns
+# You need to replace 'MktRF', 'SMB', 'HML', 'RF' and portfolio columns with actual ones from the paper.
+# Assuming 's1b1_vwret', 's1b2_vwret' etc. and 'MktRF', 'SMB', 'HML', 'RF' are the correct columns.
+summary_stats = df_ff_replication.select([
+    pl.col(col).mean().alias(f"Mean {col}") for col in df_ff_replication.columns if col.endswith("_vwret") or col in ['MktRF', 'SMB', 'HML', 'RF']
+]).vstack(
+    df_ff_replication.select([
+        pl.col(col).std().alias(f"StdDev {col}") for col in df_ff_replication.columns if col.endswith("_vwret") or col in ['MktRF', 'SMB', 'HML', 'RF']
+    ])
+)
+
+# Display the summary statistics in a table format
+print(summary_stats)
+#+END_SRC
+#+end_src
+
+Remember to replace the placeholder column names (=s1b1_vwret=, =MktRF=, etc.) with the actual column names present in your =portfolios25.csv= file that correspond to the Fama-French factors and portfolio sorts. You'll need to carefully check the Fama-French (1993) paper for the precise list of columns and statistics reported in Table 2, Panel 2. Good luck!
+
+
+
+Ok, I am getting
+
+
+
+! Package keyval Error: keywordcase undefined.
+
+See the keyval package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...
+
+l.34 \lstset{style=pythonstyle}
+
+?
+
+
+
+
+It seems like the =keyval= package is causing an issue, specifically with the =keywordcase= option in your =lstdefinestyle=. The =listings= package might not support that particular option directly in the style definition like that.
+
+Let's try removing the =keywordcase=upper= from the =lstdefinestyle= and see if that resolves the LaTeX error. We can add it as a separate option to =\lstset= if needed, or just rely on the default casing.
+
+Here's the modified LaTeX header part:
+
+#+begin_src latex
+\usepackage{listings}
+\usepackage{xcolor} % Required for the below color definitions
+
+% Define the Python language highlighting
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    morecomment=[l][\color{magenta}]{\#}, % For comments starting with #
+    tabsize=2,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single, % Adds a frame around the code block
+    numbers=left, % Line numbers on the left
+    numberstyle=\tiny\color{gray}, % Style for line numbers
+    % keywordcase=upper,  <-- Removed this line
+    literate={-}{{\tt -}}1 % Display hyphens correctly
+}
+\lstset{style=pythonstyle}
+#+end_src
+
+Try compiling your document with this change. If it works, great! If you specifically want keywords in uppercase, we can explore alternative ways to achieve that, but this should fix the immediate compilation error.
