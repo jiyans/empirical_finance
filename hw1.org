@@ -1,371 +1,662 @@
-#+AUTHOR: Jiyan Jonas Schneider (82202097) @@latex:\\@@ Graduate School of economics
-#+EMAIL:     jjs@jjs-gpu
-#+DATE:      2025-06-24 Tue
 #+LATEX_HEADER: \usepackage{fontspec}
 #+LATEX_HEADER: \usepackage[style=apa]{biblatex}
-#+LATEX_HEADER: \addbibresource{/Users/jiyanschneider/Dropbox/Documents/lib/bibliography/zotero.bib}
-#+BIBLIOGRAPHY: /Users/jiyanschneider/Dropbox/Documents/lib/bibliography/zotero.bib
 #+LATEX_HEADER: \setmainfont{Noto Serif CJK JP}
+#+LATEX_HEADER: \usepackage{booktabs}
 #+LATEX_HEADER: \usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm]{geometry}
-#+LATEX_HEADER: \usepackage{listings}
 #+LATEX_HEADER: \usepackage{xcolor}
-#+LATEX_HEADER: \lstdefinestyle{pythonstyle}{
-#+LATEX_HEADER:     language=Python,
-#+LATEX_HEADER:     basicstyle=\ttfamily\small,
-#+LATEX_HEADER:     keywordstyle=\color{blue},
-#+LATEX_HEADER:     stringstyle=\color{red},
-#+LATEX_HEADER:     commentstyle=\color{green!60!black},
-#+LATEX_HEADER:     morecomment=[l][\color{magenta}]{\#},
-#+LATEX_HEADER:     tabsize=2,
-#+LATEX_HEADER:     showstringspaces=false,
-#+LATEX_HEADER:     breaklines=true,
-#+LATEX_HEADER:     frame=single,
-#+LATEX_HEADER:     numbers=left,
-#+LATEX_HEADER:     numberstyle=\tiny\color{gray},
-#+LATEX_HEADER:     keywordcase=upper,
-#+LATEX_HEADER:     literate={-}{{\tt -}}1
-#+LATEX_HEADER: }
-#+LATEX_HEADER: \lstset{style=pythonstyle}
-
-#+TITLE:    Empirical Finance
-#+SUBTITLE: Homework 1
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \setminted{style=friendly, breaklines=true, fontsize=\small}
+#+LATEX_HEADER: \usepackage{mdframed}
+#+LATEX_HEADER: \surroundwithmdframed[
+#+LATEX_HEADER:     backgroundcolor=gray!5, % A very light gray background
+#+LATEX_HEADER:     roundcorner=4pt,        % Slightly rounded corners
+#+LATEX_HEADER:     innertopmargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerbottommargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerrightmargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerleftmargin=0.5\baselineskip,
+#+LATEX_HEADER:     linecolor=gray!20,      % A subtle border line
+#+LATEX_HEADER:     linewidth=0.4pt,
+#+LATEX_HEADER:     outermargin=0pt,
+#+LATEX_HEADER:     skipabove=1em,
+#+LATEX_HEADER:     skipbelow=1em
+#+LATEX_HEADER: ]{quote}
+#+LATEX_HEADER: \setminted{style=friendly,breaklines=true,fontsize=\small,bgcolor=gray!5}
 #+OPTIONS: toc:nil
+
+
+
+#+begin_center
+{\Huge\textbf{Empirical Finance}} \\
+{\Large\textbf{Homework 1}} \\
+\vspace{0.5em}
+Jiyan Jonas Schneider (82441028) \\
+\texttt{jiyan.schneider@keio.jp} \\
+\emph{Graduate School of Economics} \\
+\vspace{0.5em}
+#+end_center
+
 * Homework 1
 :PROPERTIES:
-:header-args:python: :session emp_fin
+:header-args:python: :session emp_fin :kernel empfin :tangle yes :async yes :exports both :environment minted
 :END:
-*** Replicate second panel of table 2 from Fama-French (1993)
-Table 2 on page 11 says Summary statistics for the monthly dependent and explanatory returns (in percent) in the regressions of tables 3 to 8: July 1963 to December 1991, 342 observations. So the period we want is (1963, 6, 1) -> (1991, 12, 31). Not sure if we should be including or excluding the boundaries.
 
-#+begin_src python
-import polars as pl
+#+begin_quote
+1) Replicate the second panel of their Table 2 (reproduced below for convenience; similar
+to Table 0-1 in the introduction of Back (2017)) by “cheating" (skipping
+portfolio formation) as follows: Use the Fama-French 25 portfolios in SAS
+dataset portfolios25.sas7bdat or its corresponding CSV file; use statistical
+software of your choice. Use value-weighted returns ending in vwret. For the
+same sample period as Fama and French's (find it out), calculate the excess mean
+returns, standard deviations, and t-statistics, and present them in a format
+similar to the panel below. In addition, compute and insert a column for “High –
+Low” next to High and a row for “Small Big" below Big, representing relevant
+zero-cost portfolios (long High short Low, and long Small short Big). Their
+significance, both statistically and economically, is important to support Fama
+and French's claim. Note that you will not get the same numbers as their table,
+because CRSP and hence the FF data are constantly revised.
+#+end_quote
+
+First we read in the data. We read in both datasets at first and we merge the =factors_monthly.csv=  dataset with the =portfolios25.csv= dataset
+to get the riskfree rate. We also create a new column =ym= that contains the year and the month for these datasets for convenient
+filtering and merging.
+
+#+begin_src python :results table
+import polars as pl;
+import polars.selectors as sc
+pl.Config.set_tbl_formatting("MARKDOWN")
+pl.Config.set_tbl_cols(6)
+pl.Config.set_float_precision(4)
+
 df = pl.read_csv("homework/homework_1/portfolios25.csv")
-df = df.with_columns(ym = pl.format("{}-{}", pl.col("year"), pl.col("month")))
-df.sort("year").head()
+factors_df = pl.read_csv("homework/homework_1/factors_monthly.csv")
+
+df = df.with_columns(ym = pl.format("{}-{}", pl.col("year"), pl.col("month").cast(pl.String).str.zfill(2)))
+factors_df = factors_df.with_columns(ym = pl.format("{}-{}", pl.col("year"), pl.col("month").cast(pl.String).str.zfill(2)))
+
+df = df.join(factors_df.select(["ym", "rf"]), on="ym")
+df.sort("year").head(10)
+df
 #+end_src
 
 #+RESULTS:
 #+begin_example
-shape: (5, 129)
-┌────────────┬────────────┬────────────┬────────────┬───┬──────┬───────┬──────────┬─────────┐
-│ s1b1_vwret ┆ s1b2_vwret ┆ s1b3_vwret ┆ s1b4_vwret ┆ … ┆ year ┆ month ┆ DATE     ┆ ym      │
-│ ---        ┆ ---        ┆ ---        ┆ ---        ┆   ┆ ---  ┆ ---   ┆ ---      ┆ ---     │
-│ f64        ┆ f64        ┆ f64        ┆ f64        ┆   ┆ i64  ┆ i64   ┆ i64      ┆ str     │
-╞════════════╪════════════╪════════════╪════════════╪═══╪══════╪═══════╪══════════╪═════════╡
-│ 0.058275   ┆ -0.017005  ┆ 0.005118   ┆ -0.021477  ┆ … ┆ 1926 ┆ 7     ┆ 19260731 ┆ 1926-7  │
-│ -0.020205  ┆ -0.080282  ┆ 0.013968   ┆ 0.021482   ┆ … ┆ 1926 ┆ 8     ┆ 19260831 ┆ 1926-8  │
-│ -0.04829   ┆ -0.026805  ┆ -0.043417  ┆ -0.032683  ┆ … ┆ 1926 ┆ 9     ┆ 19260930 ┆ 1926-9  │
-│ -0.093633  ┆ -0.035519  ┆ -0.035024  ┆ 0.034413   ┆ … ┆ 1926 ┆ 10    ┆ 19261030 ┆ 1926-10 │
-│ 0.055888   ┆ 0.041876   ┆ 0.024384   ┆ -0.044495  ┆ … ┆ 1926 ┆ 11    ┆ 19261130 ┆ 1926-11 │
-└────────────┴────────────┴────────────┴────────────┴───┴──────┴───────┴──────────┴─────────┘
+shape: (1_186, 130)
+| s1b1_vwret | s1b2_vwret | s1b3_vwret | … | DATE     | ym      | rf     |
+| ---        | ---        | ---        |   | ---      | ---     | ---    |
+| f64        | f64        | f64        |   | i64      | str     | f64    |
+|------------|------------|------------|---|----------|---------|--------|
+| 0.0583     | -0.0170    | 0.0051     | … | 19260731 | 1926-07 | 0.0022 |
+| -0.0202    | -0.0803    | 0.0140     | … | 19260831 | 1926-08 | 0.0025 |
+| -0.0483    | -0.0268    | -0.0434    | … | 19260930 | 1926-09 | 0.0023 |
+| -0.0936    | -0.0355    | -0.0350    | … | 19261030 | 1926-10 | 0.0032 |
+| 0.0559     | 0.0419     | 0.0244     | … | 19261130 | 1926-11 | 0.0031 |
+| …          | …          | …          | … | …        | …       | …      |
+| -0.0554    | -0.0500    | -0.0676    | … | 20241231 | 2024-12 | 0.0037 |
+| 0.0196     | 0.0038     | 0.0053     | … | null     | 2025-01 | 0.0037 |
+| -0.0707    | -0.0597    | -0.0651    | … | null     | 2025-02 | 0.0033 |
+| -0.1393    | -0.1210    | -0.0941    | … | null     | 2025-03 | 0.0034 |
+| 0.0080     | 0.0169     | 0.0089     | … | null     | 2025-04 | 0.0035 |
 #+end_example
 
 
-This is my org file. I wanna submit this as a homework. Can you give me some tips so that itll look good? E.g., I would like that the tables are printed and nice latex. And that the code is highlighted etc.
 
+Next, I will filter the data by the correct timeframe from the paper.
+They say that they used data from July 1963 until December 1991.
+I will include the bounds.
 
-
-Your homework looks great so far! Here are a few tips to make it even better, focusing on presentation and ensuring it meets the requirements of a polished academic submission:
-
-*** LaTeX Presentation:
-
-1.  *Code Highlighting:* To get syntax highlighting for your Python code within LaTeX, you'll want to use the =listings= package. Add this to your LaTeX preamble (the part before =\begin{document}=):
-
-    #+begin_src latex
-    \usepackage{listings}
-    \usepackage{xcolor} % Required for the below color definitions
-
-    % Define the Python language highlighting
-    \lstdefinestyle{pythonstyle}{
-        language=Python,
-        basicstyle=\ttfamily\small,
-        keywordstyle=\color{blue},
-        stringstyle=\color{red},
-        commentstyle=\color{green!60!black},
-        morecomment=[l][\color{magenta}]{\#}, % For comments starting with #
-        tabsize=2,
-        showstringspaces=false,
-        breaklines=true,
-        frame=single, % Adds a frame around the code block
-        numbers=left, % Line numbers on the left
-        numberstyle=\tiny\color{gray}, % Style for line numbers
-        keywordcase=upper, % Or lower, depending on preference
-        literate={-}{{\tt -}}1 % Display hyphens correctly
-    }
-    \lstset{style=pythonstyle}
-    #+end_src
-
-    Then, wrap your code blocks like this:
-
-    #+begin_src latex
-    \begin{lstlisting}
-    import polars as pl
-    df = pl.read_csv("homework/homework_1/portfolios25.csv")
-    df = df.with_columns(ym = pl.format("{}-{}", pl.col("year"), pl.col("month")))
-    # ... your other code ...
-    \end{lstlisting}
-    #+end_src
-
-    /Note:/ You might need to adjust the colors and styles to your preference. =xcolor= package is needed for color definitions.
-
-2.  *Table Formatting:*
-    *   *Polars DataFrame to LaTeX:* Polars DataFrames have a built-in method to convert them to LaTeX tables. You can use =df.to_latex()=. However, for better control and integration with LaTeX, it's often best to use the =polars= library in conjunction with a LaTeX table generator. For simple tables, you can directly print the Polars output and let Org-mode handle the conversion. If you want more advanced control or if the default output isn't quite right, you can explicitly format it.
-    *   *Org-mode's Built-in Table Conversion:* Org-mode is excellent at handling tables. Make sure your =RESULTS= block is correctly formatted. If you want to ensure the output is treated as a table by LaTeX, you might need to configure Org-mode's export settings. In your =.emacs= or =init.el=, you can add:
-        #+begin_src emacs-lisp
-        (setq org-latex-tables-use-packages
-              '( ("booktabs" . "") ; Use booktabs for nicer table lines
-                 ("longtable" . "") ; If your tables might span pages
-                 ("array" . "")
-                 ("colortbl" . "")
-                 ))
-        #+end_src
-        Then ensure your table export format is set correctly. For most Org-mode setups, it should automatically convert results blocks into LaTeX tables. If it's not, you might need to explicitly tell Org-mode to export the =RESULTS= block as a table.
-
-3.  *Fama-French Replication:*
-    *   *Clarity:* Clearly state that you are replicating the second panel of Table 2 from Fama-French (1993).
-    *   *Data Source:* Mention the =portfolios25.csv= file as the source.
-    *   *Date Range:* Explicitly state the date range you are using (July 1963 to December 1991) and how you handled the boundaries (e.g., "inclusive of start and end months").
-    *   *Observations:* Confirm the number of observations used in your replication.
-
-*** Code and Data Handling Tips:
-
-1.  *Date Parsing:* While =ym= is created, ensure that you are correctly parsing dates if you intend to filter by date range later. Polars has excellent date/time capabilities. You might want to convert your =DATE= column (currently an integer) into a proper datetime object.
-
-    #+begin_src python
-    # Example of converting to datetime if DATE is in YYYYMMDD format
-    df = df.with_columns(
-        pl.col("DATE").cast(pl.String).str.strptime(pl.Date, "%Y%m%d").alias("date_col")
-    )
-    #+end_src
-
-    Then you can filter by date:
-    #+begin_src python
-    df_filtered = df.filter(
-        (pl.col("date_col") >= "1963-07-01") & (pl.col("date_col") <= "1991-12-31")
-    )
-    #+end_src
-    /Self-correction:/ Based on your provided =DATE= column values (e.g., =19260731=), they seem to be =YYYYMMDD=. The =strptime= format string ="%Y%m%d"= is correct for this.
-
-2.  *Column Selection:* The Fama-French paper likely focuses on specific columns. Ensure you are selecting only the relevant columns for your replication. If the =portfolios25.csv= file contains many more columns than are in the Fama-French table, you might want to explicitly select them.
-
-    For example, if you know the column names you need:
-    #+begin_src python
-    # Assuming 'sx1_vwret', 'sx2_vwret', etc. are the columns needed
-    columns_to_keep = ['sx1_vwret', 'sx2_vwret', 'sx3_vwret', 'sx4_vwret', 'sx5_vwret', 'sx6_vwret', 'sx7_vwret', 'sx8_vwret', 'sx9_vwret', 'sx10_vwret', 'sx11_vwret', 'sx12_vwret', 'sx13_vwret', 'sx14_vwret', 'sx15_vwret', 'sx16_vwret', 'sx17_vwret', 'sx18_vwret', 'sx19_vwret', 'sx20_vwret', 'sx21_vwret', 'sx22_vwret', 'sx23_vwret', 'sx24_vwret', 'sx25_vwret', 'MktRF', 'SMB', 'HML', 'RF'] # This is just an example, replace with actual columns from the paper.
-    df_selected = df_filtered.select(columns_to_keep)
-    #+end_src
-    You'll need to check the Fama-French paper for the exact column names and the set of factors they use (e.g., =Mkt-RF=, =SMB=, =HML=).
-
-3.  *Data Cleaning/Verification:* Double-check the data types and ensure there are no unexpected missing values (=null= or =NaN=) in the columns you're using for calculations. Polars makes this easy: =df.null_count()=.
-
-*** Org-mode Structure and Content:
-
-1.  *Headings:* Your use of =*= and =***= for headings is good. Ensure you have a clear structure for each part of the homework.
-2.  *Explanations:* Add brief explanations for your code. For instance, after reading the CSV, you could add a sentence like: "The following code reads the portfolio return data from =portfolios25.csv=."
-3.  *Intermediate Results:* For a homework assignment, it can be beneficial to show intermediate steps or results, especially if they help demonstrate your understanding. For example, showing the =.head()= output is good. If you perform filtering or column selection, you could show a =.head()= of the resulting DataFrame as well.
-4.  *Citations:* Make sure your citation of Fama-French (1993) is properly formatted within your LaTeX document, likely using =biblatex= as you've included in your header.
-
-*** Example of an Improved Section:
-
-#+begin_src org
-#+AUTHOR: Jiyan Jonas Schneider (82202097) @@latex:\@@ Graduate School of economics
-#+EMAIL:     jjs@jjs-gpu
-#+DATE:      2025-06-24 Tue
-#+LATEX_HEADER: \usepackage{fontspec}
-#+LATEX_HEADER: \usepackage[style=apa]{biblatex}
-#+LATEX_HEADER: \addbibresource{/Users/jiyanschneider/Dropbox/Documents/lib/bibliography/zotero.bib}
-#+BIBLIOGRAPHY: /Users/jiyanschneider/Dropbox/Documents/lib/bibliography/zotero.bib
-#+LATEX_HEADER: \setmainfont{Noto Serif CJK JP}
-#+LATEX_HEADER: \usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm]{geometry}
-#+LATEX_HEADER: \usepackage{listings}
-#+LATEX_HEADER: \usepackage{xcolor}
-#+LATEX_HEADER: \lstdefinestyle{pythonstyle}{
-#+LATEX_HEADER:     language=Python,
-#+LATEX_HEADER:     basicstyle=\ttfamily\small,
-#+LATEX_HEADER:     keywordstyle=\color{blue},
-#+LATEX_HEADER:     stringstyle=\color{red},
-#+LATEX_HEADER:     commentstyle=\color{green!60!black},
-#+LATEX_HEADER:     morecomment=[l][\color{magenta}]{\#},
-#+LATEX_HEADER:     tabsize=2,
-#+LATEX_HEADER:     showstringspaces=false,
-#+LATEX_HEADER:     breaklines=true,
-#+LATEX_HEADER:     frame=single,
-#+LATEX_HEADER:     numbers=left,
-#+LATEX_HEADER:     numberstyle=\tiny\color{gray},
-#+LATEX_HEADER:     keywordcase=upper,
-#+LATEX_HEADER:     literate={-}{{\tt -}}1
-#+LATEX_HEADER: }
-#+LATEX_HEADER: \lstset{style=pythonstyle}
-
-
-#+TITLE:    Empirical Finance
-#+SUBTITLE: Homework 1
-#+OPTIONS: toc:nil
-
-
-* Homework 1: Replication of Fama-French (1993) Table 2, Panel 2
-
-*** Objective
-The goal of this assignment is to replicate the second panel of Table 2 from Fama-French (1993), which presents summary statistics for monthly stock portfolio returns.
-
-*** Data Loading and Preparation
-
-The data is sourced from the `portfolios25.csv` file. We will focus on the period from July 1963 to December 1991, as specified in the paper. This period covers 342 monthly observations.
-
-#+BEGIN_SRC python
-import polars as pl
-
-# Load the dataset
-df = pl.read_csv("homework/homework_1/portfolios25.csv")
-
-# Create a 'ym' column for easier potential sorting/filtering by year and month
-df = df.with_columns(ym = pl.format("{}-{}", pl.col("year"), pl.col("month")))
-
-# Convert 'DATE' column to datetime objects for precise date filtering
-# Assuming DATE is in YYYYMMDD format
-df = df.with_columns(
-    pl.col("DATE").cast(pl.String).str.strptime(pl.Date, "%Y%m%d").alias("date_obj")
-)
-
-# Display the first 5 rows to verify loading and initial structure
-print(df.head())
-df
-#+END_SRC
-
-#+RESULTS:
-: None
-
-*** Data Filtering and Selection
-
-We filter the DataFrame to include only the specified date range (July 1963 to December 1991). The Fama-French paper focuses on specific portfolio sorts and factors. We will select these relevant columns.
-
-#+BEGIN_SRC python
-# Define the target date range based on Fama-French (1993)
-start_date = "1963-07-01"
-end_date = "1991-12-31"
-
-# Filter the DataFrame
-df_filtered = df.filter(
-    (pl.col("date_obj") >= start_date) & (pl.col("date_obj") <= end_date)
-)
-
-# Define the columns relevant to the Fama-French table replication
-# NOTE: You need to replace these with the ACTUAL column names from the paper and your CSV.
-# Common factors are Mkt-RF, SMB, HML, RF. Portfolio names might be like 's1b1_vwret', etc.
-# Based on your head() output, 's1b1_vwret' etc. are present.
-# You MUST consult Fama-French (1993) for the exact list of columns they used.
-ff_columns = [
-    # Example: Low-to-High size portfolios
-    's1b1_vwret', 's1b2_vwret', 's1b3_vwret', 's1b4_vwret', 's1b5_vwret',
-    # Example: Low-to-High book-to-market portfolios
-    's5b1_vwret', 's5b2_vwret', 's5b3_vwret', 's5b4_vwret', 's5b5_vwret',
-    # Factors
-    'MktRF', # Or 'Mkt-RF' depending on the CSV column name
-    'SMB',
-    'HML',
-    'RF' # Risk-Free Rate
-]
-
-# Select only the relevant columns
-# Ensure all columns in ff_columns actually exist in df_filtered
-try:
-    df_ff_replication = df_filtered.select(ff_columns)
-except Exception as e:
-    print(f"Error selecting columns: {e}")
-    print("Please ensure all column names in 'ff_columns' exist in your DataFrame.")
-    # Fallback: select all columns if ff_columns are not correct, for debugging
-    df_ff_replication = df_filtered
-
-
-# Display the first few rows of the filtered and selected data
-print("Filtered and Selected Data Head:")
-print(df_ff_replication.head())
-
-# Verify the number of observations
-print(f"\nNumber of observations in the filtered data: {df_filtered.shape[0]}")
-#+END_SRC
-
-#+RESULTS:
-#+BEGIN_EXAMPLE
-#+END_EXAMPLE
-
-*** Replication of Table 2, Panel 2
-
-This section presents the replicated summary statistics.
-#+CAPTION: Replicated Summary Statistics (Fama-French, 1993) - Panel 2
-#+LABEL: tab:ff_table2_panel2
-#+RESULTS:
-#+BEGIN_SRC polars :results latex :wrap table
-# This is where you would calculate the summary statistics.
-# For example, mean, std dev, min, max for each column.
-# You'll need to consult Fama-French (1993) Table 2 for the exact statistics they report.
-# It's likely to be mean, std dev, possibly min/max, and maybe number of observations.
-
-# Example: Calculate mean and standard deviation for the selected columns
-# You need to replace 'MktRF', 'SMB', 'HML', 'RF' and portfolio columns with actual ones from the paper.
-# Assuming 's1b1_vwret', 's1b2_vwret' etc. and 'MktRF', 'SMB', 'HML', 'RF' are the correct columns.
-summary_stats = df_ff_replication.select([
-    pl.col(col).mean().alias(f"Mean {col}") for col in df_ff_replication.columns if col.endswith("_vwret") or col in ['MktRF', 'SMB', 'HML', 'RF']
-]).vstack(
-    df_ff_replication.select([
-        pl.col(col).std().alias(f"StdDev {col}") for col in df_ff_replication.columns if col.endswith("_vwret") or col in ['MktRF', 'SMB', 'HML', 'RF']
-    ])
-)
-
-# Display the summary statistics in a table format
-print(summary_stats)
-#+END_SRC
+#+begin_src python :results table
+fama_period = df.filter((pl.col("ym") >= "1963-07") & (pl.col("ym") <= "1991-12"))
+fama_period
 #+end_src
 
-Remember to replace the placeholder column names (=s1b1_vwret=, =MktRF=, etc.) with the actual column names present in your =portfolios25.csv= file that correspond to the Fama-French factors and portfolio sorts. You'll need to carefully check the Fama-French (1993) paper for the precise list of columns and statistics reported in Table 2, Panel 2. Good luck!
+#+RESULTS:
+#+begin_example
+shape: (342, 130)
+| s1b1_vwret | s1b2_vwret | s1b3_vwret | … | DATE     | ym      | rf     |
+| ---        | ---        | ---        |   | ---      | ---     | ---    |
+| f64        | f64        | f64        |   | i64      | str     | f64    |
+|------------|------------|------------|---|----------|---------|--------|
+| 0.0113     | -0.0036    | 0.0072     | … | 19630731 | 1963-07 | 0.0027 |
+| 0.0424     | 0.0137     | 0.0149     | … | 19630830 | 1963-08 | 0.0025 |
+| -0.0173    | 0.0062     | -0.0100    | … | 19630930 | 1963-09 | 0.0027 |
+| 0.0038     | -0.0073    | 0.0131     | … | 19631031 | 1963-10 | 0.0029 |
+| -0.0333    | -0.0384    | -0.0179    | … | 19631129 | 1963-11 | 0.0027 |
+| …          | …          | …          | … | …        | …       | …      |
+| 0.0373     | 0.0490     | 0.0337     | … | 19910830 | 1991-08 | 0.0046 |
+| 0.0443     | 0.0257     | 0.0020     | … | 19910930 | 1991-09 | 0.0046 |
+| 0.0658     | 0.0415     | 0.0186     | … | 19911031 | 1991-10 | 0.0042 |
+| -0.0186    | -0.0321    | -0.0416    | … | 19911129 | 1991-11 | 0.0039 |
+| 0.0660     | 0.0360     | 0.0532     | … | 19911231 | 1991-12 | 0.0038 |
+#+end_example
 
+This table looks good to me.
+We should take the means for the 25 columns that end with =_vwret=
+We can take the means of those columns like this.
 
-
-Ok, I am getting
-
-
-
-! Package keyval Error: keywordcase undefined.
-
-See the keyval package documentation for explanation.
-Type  H <return>  for immediate help.
- ...
-
-l.34 \lstset{style=pythonstyle}
-
-?
-
-
-
-
-It seems like the =keyval= package is causing an issue, specifically with the =keywordcase= option in your =lstdefinestyle=. The =listings= package might not support that particular option directly in the style definition like that.
-
-Let's try removing the =keywordcase=upper= from the =lstdefinestyle= and see if that resolves the LaTeX error. We can add it as a separate option to =\lstset= if needed, or just rely on the default casing.
-
-Here's the modified LaTeX header part:
-
-#+begin_src latex
-\usepackage{listings}
-\usepackage{xcolor} % Required for the below color definitions
-
-% Define the Python language highlighting
-\lstdefinestyle{pythonstyle}{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue},
-    stringstyle=\color{red},
-    commentstyle=\color{green!60!black},
-    morecomment=[l][\color{magenta}]{\#}, % For comments starting with #
-    tabsize=2,
-    showstringspaces=false,
-    breaklines=true,
-    frame=single, % Adds a frame around the code block
-    numbers=left, % Line numbers on the left
-    numberstyle=\tiny\color{gray}, % Style for line numbers
-    % keywordcase=upper,  <-- Removed this line
-    literate={-}{{\tt -}}1 % Display hyphens correctly
-}
-\lstset{style=pythonstyle}
+#+begin_src python :results table
+fama_period.select(sc.ends_with("_vwret")).mean()
 #+end_src
 
-Try compiling your document with this change. If it works, great! If you specifically want keywords in uppercase, we can explore alternative ways to achieve that, but this should fix the immediate compilation error.
+#+RESULTS:
+#+begin_example
+shape: (1, 25)
+| s1b1_vwret | s1b2_vwret | s1b3_vwret | … | s5b3_vwret | s5b4_vwret | s5b5_vwret |
+| ---        | ---        | ---        |   | ---        | ---        | ---        |
+| f64        | f64        | f64        |   | f64        | f64        | f64        |
+|------------|------------|------------|---|------------|------------|------------|
+| 0.0087     | 0.0122     | 0.0129     | … | 0.0091     | 0.0106     | 0.0108     |
+#+end_example
+
+To get excess returns we also have to subtract the riskfree rate from the returns.
+
+With polars we can do it like this:
+
+#+begin_src python :results table
+excess_returns_fama = fama_period.with_columns((sc.ends_with("_vwret") - pl.col("rf")))
+ems = excess_returns_fama.select(sc.ends_with("_vwret")).mean()
+ems
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (1, 25)
+| s1b1_vwret | s1b2_vwret | s1b3_vwret | … | s5b3_vwret | s5b4_vwret | s5b5_vwret |
+| ---        | ---        | ---        |   | ---        | ---        | ---        |
+| f64        | f64        | f64        |   | f64        | f64        | f64        |
+|------------|------------|------------|---|------------|------------|------------|
+| 0.0031     | 0.0067     | 0.0074     | … | 0.0036     | 0.0051     | 0.0053     |
+#+end_example
+
+When I compared these few values, while they aren't exactly the same, they look
+close to what Fama and French got in originally.
+
+Next, lets look into the standard devations:
+
+#+begin_src python :results table
+estds = excess_returns_fama.select(sc.ends_with("_vwret")).std()
+estds
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (1, 25)
+| s1b1_vwret | s1b2_vwret | s1b3_vwret | … | s5b3_vwret | s5b4_vwret | s5b5_vwret |
+| ---        | ---        | ---        |   | ---        | ---        | ---        |
+| f64        | f64        | f64        |   | f64        | f64        | f64        |
+|------------|------------|------------|---|------------|------------|------------|
+| 0.0778     | 0.0680     | 0.0629     | … | 0.0439     | 0.0432     | 0.0479     |
+#+end_example
+
+
+These are also slightly different from the original values ...
+Finally, lets look at the t-statistics.
+
+
+
+#+begin_src python :results table
+ts = ems / ( estds / (excess_returns_fama.shape[0] ** 0.5 ))
+ts
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (1, 25)
+| s1b1_vwret | s1b2_vwret | s1b3_vwret | … | s5b3_vwret | s5b4_vwret | s5b5_vwret |
+| ---        | ---        | ---        |   | ---        | ---        | ---        |
+| f64        | f64        | f64        |   | f64        | f64        | f64        |
+|------------|------------|------------|---|------------|------------|------------|
+| 0.7439     | 1.8105     | 2.1691     | … | 1.4978     | 2.1720     | 2.0402     |
+#+end_example
+
+
+Next, lets write a short helper function to visualize our dataframes.
+
+#+begin_src python :exports code
+def reshape_to_5x5(df_1x25):
+    long_df = df_1x25.melt().with_columns(
+        pl.col("variable").str.extract(r"s(\d)b(\d)_vwret", 1).cast(pl.Int8).alias("size"),
+        pl.col("variable").str.extract(r"s(\d)b(\d)_vwret", 2).cast(pl.Int8).alias("bm")
+    )
+    return long_df.pivot(index="size", columns="bm", values="value").sort("size").drop("size")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+None
+#+end_example
+
+And then we can finally visualize our results.
+We multiply by 100, because thats what FF 1993 seemed to do.
+
+#+begin_src python :results table
+reshape_to_5x5(ems) *100
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (5, 5)
+| 1      | 2      | 3      | 4      | 5      |
+| ---    | ---    | ---    | ---    | ---    |
+| f64    | f64    | f64    | f64    | f64    |
+|--------|--------|--------|--------|--------|
+| 0.3130 | 0.6659 | 0.7383 | 0.8677 | 0.9898 |
+| 0.3936 | 0.6443 | 0.8410 | 0.8988 | 0.9821 |
+| 0.4366 | 0.6474 | 0.6769 | 0.8272 | 0.9218 |
+| 0.4596 | 0.3656 | 0.6162 | 0.7928 | 0.8865 |
+| 0.3696 | 0.3374 | 0.3558 | 0.5073 | 0.5285 |
+#+end_example
+
+These are the standard deviations.
+
+#+begin_src python :results table
+reshape_to_5x5(estds)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (5, 5)
+| 1      | 2      | 3      | 4      | 5      |
+| ---    | ---    | ---    | ---    | ---    |
+| f64    | f64    | f64    | f64    | f64    |
+|--------|--------|--------|--------|--------|
+| 0.0778 | 0.0680 | 0.0629 | 0.0594 | 0.0629 |
+| 0.0730 | 0.0630 | 0.0575 | 0.0535 | 0.0603 |
+| 0.0666 | 0.0573 | 0.0520 | 0.0493 | 0.0570 |
+| 0.0590 | 0.0542 | 0.0509 | 0.0494 | 0.0565 |
+| 0.0492 | 0.0472 | 0.0439 | 0.0432 | 0.0479 |
+#+end_example
+
+
+And these are the t-stats.
+
+#+begin_src python :results table
+reshape_to_5x5(ts)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (5, 5)
+| 1      | 2      | 3      | 4      | 5      |
+| ---    | ---    | ---    | ---    | ---    |
+| f64    | f64    | f64    | f64    | f64    |
+|--------|--------|--------|--------|--------|
+| 0.7439 | 1.8105 | 2.1691 | 2.7037 | 2.9092 |
+| 0.9978 | 1.8902 | 2.7058 | 3.1065 | 3.0095 |
+| 1.2116 | 2.0890 | 2.4080 | 3.1008 | 2.9897 |
+| 1.4405 | 1.2477 | 2.2377 | 2.9680 | 2.8997 |
+| 1.3897 | 1.3207 | 1.4978 | 2.1720 | 2.0402 |
+#+end_example
+
+One more helper for the complete table. This one purely does formatting
+
+#+begin_src python
+def format_statistic_table(stat_df, is_mean=False):
+    table_data = []
+    row_labels = ["Small", "2", "3", "4", "Big"]
+    for i in range(1, 6):
+        row = []
+        for j in range(1, 6):
+            col_name = f"s{i}b{j}_vwret"
+            value = stat_df.select(col_name).item()
+            if is_mean: value *= 100
+            row.append(value)
+        hl_value = stat_df.select(f"HL_s{i}").item()
+        if is_mean: hl_value *= 100
+        row.append(hl_value)
+        table_data.append(row)
+    col_names = ["Low", "2", "3", "4", "High", "High - Low"]
+    grid_df = pl.DataFrame(table_data, schema=col_names)
+    grid_df = grid_df.with_columns(pl.Series("Size", row_labels)).select(pl.col("Size"), sc.all().exclude("Size"))
+    sb_row_values = []
+    for j in range(1, 6): # Book-to-Market (b1 to b5)
+        col_name = f"SB_b{j}"
+        value = stat_df.select(col_name).item()
+        if is_mean: value *= 100
+        sb_row_values.append(value)
+
+    sb_for_hl = stat_df.select("HL_s1").item() - stat_df.select("HL_s5").item()
+    if is_mean: sb_for_hl *= 100
+
+    sb_row_values.append(sb_for_hl)
+    sb_row_df = pl.DataFrame([sb_row_values], schema=col_names)
+    sb_row_df = sb_row_df.with_columns(pl.lit("Small - Big").alias("Size")).select(pl.col("Size"), sc.all().exclude("Size"))
+    final_table = pl.concat([grid_df, sb_row_df], how="vertical")
+    return final_table.fill_null(0)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+None
+#+end_example
+
+
+#+begin_src python
+hl_exprs = [ (pl.col(f"s{i}b5_vwret") - pl.col(f"s{i}b1_vwret")).alias(f"HL_s{i}") for i in range(1, 6)]
+sb_exprs = [(pl.col(f"s1b{i}_vwret") - pl.col(f"s5b{i}_vwret")).alias(f"SB_b{i}") for i in range(1, 6)]
+excess_returns_extended = excess_returns_fama.with_columns(hl_exprs + sb_exprs)
+N = excess_returns_extended.shape[0]
+all_return_cols = excess_returns_extended.select(sc.ends_with("_vwret"), sc.starts_with("HL_s"), sc.starts_with("SB_b")).columns
+
+calculated_stats = excess_returns_extended.select(
+    [pl.col(col).mean().alias(f"mean_{col}") for col in all_return_cols] +
+    [pl.col(col).std().alias(f"std_{col}") for col in all_return_cols]
+)
+calculated_stats = calculated_stats.with_columns(
+    [(pl.col(f"mean_{col}") / (pl.col(f"std_{col}") / (N ** 0.5))).alias(f"tstat_{col}") for col in all_return_cols]
+)
+
+# Extract the separate mean, std, and t-stat DataFrames (each will be a single row)
+all_means = calculated_stats.select(sc.starts_with("mean_")).rename({col: col.replace("mean_", "") for col in calculated_stats.columns if col.startswith("mean_")})
+all_stds = calculated_stats.select(sc.starts_with("std_")).rename({col: col.replace("std_", "") for col in calculated_stats.columns if col.startswith("std_")})
+all_ts = calculated_stats.select(sc.starts_with("tstat_")).rename({col: col.replace("tstat_", "") for col in calculated_stats.columns if col.startswith("tstat_")})
+
+
+mean_returns_table = format_statistic_table(all_means, is_mean=True)
+pl.Config.set_tbl_cols(8) # Set table columns back to 8 again
+mean_returns_table
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (6, 7)
+| Size        | Low     | 2      | 3      | 4      | High   | High - Low |
+| ---         | ---     | ---    | ---    | ---    | ---    | ---        |
+| str         | f64     | f64    | f64    | f64    | f64    | f64        |
+|-------------|---------|--------|--------|--------|--------|------------|
+| Small       | 0.3130  | 0.6659 | 0.7383 | 0.8677 | 0.9898 | 0.6768     |
+| 2           | 0.3936  | 0.6443 | 0.8410 | 0.8988 | 0.9821 | 0.5884     |
+| 3           | 0.4366  | 0.6474 | 0.6769 | 0.8272 | 0.9218 | 0.4852     |
+| 4           | 0.4596  | 0.3656 | 0.6162 | 0.7928 | 0.8865 | 0.4270     |
+| Big         | 0.3696  | 0.3374 | 0.3558 | 0.5073 | 0.5285 | 0.1590     |
+| Small - Big | -0.0566 | 0.3286 | 0.3825 | 0.3604 | 0.4612 | 0.5178     |
+#+end_example
+
+#+begin_src  python
+std_devs_table = format_statistic_table(all_stds)
+std_devs_table
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (6, 7)
+| Size        | Low    | 2      | 3      | 4      | High   | High - Low |
+| ---         | ---    | ---    | ---    | ---    | ---    | ---        |
+| str         | f64    | f64    | f64    | f64    | f64    | f64        |
+|-------------|--------|--------|--------|--------|--------|------------|
+| Small       | 0.0778 | 0.0680 | 0.0629 | 0.0594 | 0.0629 | 0.0338     |
+| 2           | 0.0730 | 0.0630 | 0.0575 | 0.0535 | 0.0603 | 0.0366     |
+| 3           | 0.0666 | 0.0573 | 0.0520 | 0.0493 | 0.0570 | 0.0348     |
+| 4           | 0.0590 | 0.0542 | 0.0509 | 0.0494 | 0.0565 | 0.0355     |
+| Big         | 0.0492 | 0.0472 | 0.0439 | 0.0432 | 0.0479 | 0.0380     |
+| Small - Big | 0.0535 | 0.0452 | 0.0446 | 0.0401 | 0.0422 | -0.0042    |
+#+end_example
+
+#+begin_src python
+t_stats_table = format_statistic_table(all_ts)
+t_stats_table
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (6, 7)
+| Size        | Low     | 2      | 3      | 4      | High   | High - Low |
+| ---         | ---     | ---    | ---    | ---    | ---    | ---        |
+| str         | f64     | f64    | f64    | f64    | f64    | f64        |
+|-------------|---------|--------|--------|--------|--------|------------|
+| Small       | 0.7439  | 1.8105 | 2.1691 | 2.7037 | 2.9092 | 3.7024     |
+| 2           | 0.9978  | 1.8902 | 2.7058 | 3.1065 | 3.0095 | 2.9719     |
+| 3           | 1.2116  | 2.0890 | 2.4080 | 3.1008 | 2.9897 | 2.5809     |
+| 4           | 1.4405  | 1.2477 | 2.2377 | 2.9680 | 2.8997 | 2.2237     |
+| Big         | 1.3897  | 1.3207 | 1.4978 | 2.1720 | 2.0402 | 0.7744     |
+| Small - Big | -0.1958 | 1.3440 | 1.5868 | 1.6607 | 2.0209 | 2.9280     |
+#+end_example
+
+
+** 2
+
+#+begin_quote
+2) Calculate and present the mean, standard deviation, and t-statistics of the Fama-French
+three factors (MKTRF, SMB, HML in SAS dataset factors_monthly.sas7bdat, ditto)
+and the momentum factor (UMD) for the same sample period.
+#+end_quote
+
+#+begin_src python
+factors_fama_period = factors_df.filter((pl.col("ym") >= "1963-07") & (pl.col("ym") <= "1991-12"))
+factor_cols = ["mktrf", "smb", "hml", "umd"]
+N_factors = factors_fama_period.shape[0]
+
+factor_stats = factors_fama_period.select(
+    [pl.col(col).mean().alias(f"Mean_{col}") for col in factor_cols] +
+    [pl.col(col).std().alias(f"StdDev_{col}") for col in factor_cols]
+)
+
+for col in factor_cols:
+    factor_stats = factor_stats.with_columns((pl.col(f"Mean_{col}") / (pl.col(f"StdDev_{col}") / (N_factors ** 0.5))).alias(f"TStat_{col}"))
+
+means = factor_stats.select(sc.starts_with("Mean_")).row(0)
+stds = factor_stats.select(sc.starts_with("StdDev_")).row(0)
+tstats = factor_stats.select(sc.starts_with("TStat_")).row(0)
+
+pl.DataFrame({
+    "Factor": factor_cols,
+    "Mean (%)": [m * 100 for m in means],
+    "Standard Deviation": stds,
+    "T-Statistic": tstats
+})
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (4, 4)
+| Factor | Mean (%) | Standard Deviation | T-Statistic |
+| ---    | ---      | ---                | ---         |
+| str    | f64      | f64                | f64         |
+|--------|----------|--------------------|-------------|
+| mktrf  | 0.4107   | 0.0459             | 1.6542      |
+| smb    | 0.2580   | 0.0286             | 1.6678      |
+| hml    | 0.3804   | 0.0254             | 2.7709      |
+| umd    | 0.8405   | 0.0347             | 4.4836      |
+#+end_example
+
+** 3
+
+#+begin_quote
+1) Repeat Parts 1) and 2) for the period from January 1927 to December 2024. Do you find a similar pattern in this longer sample?
+#+end_quote
+
+
+#+begin_src python
+long_period = df.filter((pl.col("ym") >= "1927-01") & (pl.col("ym") <= "2024-12"))
+excess_returns_long = long_period.with_columns((sc.ends_with("_vwret") - pl.col("rf")))
+excess_returns_long_extended = excess_returns_long.with_columns(hl_exprs + sb_exprs)
+N_long = excess_returns_long_extended.shape[0]
+
+all_return_cols_long = excess_returns_long_extended.select(sc.ends_with("_vwret"), sc.starts_with("HL_s"), sc.starts_with("SB_b")).columns
+
+calculated_stats_long = excess_returns_long_extended.select(
+    [pl.col(col).mean().alias(f"mean_{col}") for col in all_return_cols_long] +
+    [pl.col(col).std().alias(f"std_{col}") for col in all_return_cols_long]
+)
+calculated_stats_long = calculated_stats_long.with_columns(
+    [(pl.col(f"mean_{col}") / (pl.col(f"std_{col}") / (N_long ** 0.5))).alias(f"tstat_{col}")for col in all_return_cols_long]
+)
+
+all_means_long = calculated_stats_long.select(sc.starts_with("mean_")).rename({col: col.replace("mean_", "") for col in calculated_stats_long.columns if col.startswith("mean_")})
+all_stds_long = calculated_stats_long.select(sc.starts_with("std_")).rename({col: col.replace("std_", "") for col in calculated_stats_long.columns if col.startswith("std_")})
+all_ts_long = calculated_stats_long.select(sc.starts_with("tstat_")).rename({col: col.replace("tstat_", "") for col in calculated_stats_long.columns if col.startswith("tstat_")})
+mean_returns_table_long = format_statistic_table(all_means_long, is_mean=True)
+std_devs_table_long = format_statistic_table(all_stds_long)
+t_stats_table_long = format_statistic_table(all_ts_long)
+mean_returns_table_long
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (6, 7)
+| Size        | Low     | 2      | 3      | 4      | High   | High - Low |
+| ---         | ---     | ---    | ---    | ---    | ---    | ---        |
+| str         | f64     | f64    | f64    | f64    | f64    | f64        |
+|-------------|---------|--------|--------|--------|--------|------------|
+| Small       | 0.5566  | 0.6711 | 0.9869 | 1.1396 | 1.3417 | 0.7851     |
+| 2           | 0.6469  | 0.9371 | 0.9634 | 1.0502 | 1.2322 | 0.5854     |
+| 3           | 0.7237  | 0.9057 | 0.9248 | 0.9969 | 1.1055 | 0.3818     |
+| 4           | 0.7311  | 0.7795 | 0.8407 | 0.9629 | 1.0308 | 0.2996     |
+| Big         | 0.6881  | 0.6361 | 0.7081 | 0.6573 | 0.9501 | 0.2621     |
+| Small - Big | -0.1315 | 0.0350 | 0.2788 | 0.4824 | 0.3916 | 0.5231     |
+#+end_example
+
+#+begin_src python
+std_devs_table_long
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (6, 7)
+| Size        | Low    | 2      | 3      | 4      | High   | High - Low |
+| ---         | ---    | ---    | ---    | ---    | ---    | ---        |
+| str         | f64    | f64    | f64    | f64    | f64    | f64        |
+|-------------|--------|--------|--------|--------|--------|------------|
+| Small       | 0.1195 | 0.0969 | 0.0888 | 0.0831 | 0.0920 | 0.0732     |
+| 2           | 0.0800 | 0.0750 | 0.0724 | 0.0745 | 0.0870 | 0.0501     |
+| 3           | 0.0738 | 0.0651 | 0.0648 | 0.0696 | 0.0841 | 0.0485     |
+| 4           | 0.0621 | 0.0612 | 0.0632 | 0.0684 | 0.0859 | 0.0549     |
+| Big         | 0.0535 | 0.0526 | 0.0560 | 0.0655 | 0.0848 | 0.0594     |
+| Small - Big | 0.0947 | 0.0721 | 0.0600 | 0.0514 | 0.0606 | 0.0138     |
+#+end_example
+
+
+#+begin_src python
+t_stats_table_long
+#+end_src
+
+#+RESULTS:
+#+begin_example
+shape: (6, 7)
+| Size        | Low     | 2      | 3      | 4      | High   | High - Low |
+| ---         | ---     | ---    | ---    | ---    | ---    | ---        |
+| str         | f64     | f64    | f64    | f64    | f64    | f64        |
+|-------------|---------|--------|--------|--------|--------|------------|
+| Small       | 1.5975  | 2.3760 | 3.8115 | 4.7048 | 4.9996 | 3.6789     |
+| 2           | 2.7737  | 4.2828 | 4.5642 | 4.8319 | 4.8555 | 4.0027     |
+| 3           | 3.3647  | 4.7739 | 4.8911 | 4.9136 | 4.5106 | 2.6982     |
+| 4           | 4.0346  | 4.3671 | 4.5585 | 4.8274 | 4.1135 | 1.8698     |
+| Big         | 4.4082  | 4.1433 | 4.3369 | 3.4387 | 3.8404 | 1.5132     |
+| Small - Big | -0.4763 | 0.1665 | 1.5934 | 3.2187 | 2.2151 | 2.1657     |
+#+end_example
+
+#+begin_src python
+factors_long_period = factors_df.filter((pl.col("ym") >= "1927-01") & (pl.col("ym") <= "2024-12"))
+N_factors_long = factors_long_period.shape[0]
+
+factor_stats_long = factors_long_period.select(
+    [pl.col(col).mean().alias(f"Mean_{col}") for col in factor_cols] +
+    [pl.col(col).std().alias(f"StdDev_{col}") for col in factor_cols]
+)
+
+for col in factor_cols:
+    factor_stats_long = factor_stats_long.with_columns((pl.col(f"Mean_{col}") / (pl.col(f"StdDev_{col}") / (N_factors_long ** 0.5))).alias(f"TStat_{col}"))
+
+means_long = factor_stats_long.select(sc.starts_with("Mean_")).row(0)
+stds_long = factor_stats_long.select(sc.starts_with("StdDev_")).row(0)
+tstats_long = factor_stats_long.select(sc.starts_with("TStat_")).row(0)
+
+pl.DataFrame({"Factor": factor_cols, "Mean (%)": [m * 100 for m in means_long],
+    "Standard Deviation": stds_long, "T-Statistic": tstats_long})
+#+end_src
+
+
+#+RESULTS:
+#+begin_example
+shape: (4, 4)
+| Factor | Mean (%) | Standard Deviation | T-Statistic |
+| ---    | ---      | ---                | ---         |
+| str    | f64      | f64                | f64         |
+|--------|----------|--------------------|-------------|
+| mktrf  | 0.6847   | 0.0534             | 4.4008      |
+| smb    | 0.1791   | 0.0316             | 1.9405      |
+| hml    | 0.3454   | 0.0357             | 3.3206      |
+| umd    | 0.6152   | 0.0469             | 4.4961      |
+#+end_example
+
+
+Could you also answer the question he is asking?
+
+
+
+#+begin_reasoning
+**Assessing Period Similarities*
+
+I'm analyzing the results of the Fama-French 25 portfolios and factors across the two periods to identify any patterns. Comparing the July 1963 - December 1991 period with the longer sample is key. I'll need to meticulously evaluate the performance data for similarities.
+
+
+*Comparing Performance Data*
+
+I've dived deep into the mean excess returns of the Fama-French 25 portfolios.  I'm now focusing on the size and value effects to see how they stack up. It's becoming clearer where the similarities lie. The SMB and HML figures offer interesting contrasts between the datasets, and their t-statistics are a key indicator. I plan to check out the variance next.
+
+
+*Investigating Volatilities*
+
+I'm now focusing on standard deviations. I've calculated the standard deviations for both Fama-French 25 portfolios and factors for each period. Observing the data, it appears that volatilities are generally higher in the longer period, especially in the 25 portfolios. I'm keen to see if any specific patterns emerge. I plan to use this to calculate Sharpe ratios to check if risk-adjusted returns are affected. I'll focus on SMB and HML now.
+
+
+*Evaluating T-Stat Significance*
+
+I've examined the T-statistics for the portfolios, and in both periods, the value premium remains statistically significant. The size premium also has statistical significance, particularly in the longer dataset.  While the t-stats for the small-cap, low B/M firms in the original period show less significance. This leads to a nuanced answer to the question.
+
+
+*Confirming Persistence Trends*
+
+I'm now focusing on a more nuanced comparison. I've seen that the value premium persists statistically in both periods, and the size effect generally holds, with interesting differences. The volatility data also shows higher standard deviations in the longer sample. Next, I plan to analyze the Fama-French factors to get more insights. I will calculate Sharpe ratios for factors and portfolios.
+
+
+*Revising Factor Analysis*
+
+I'm now calculating Sharpe ratios for both the factors and the Fama-French portfolios to provide further insights. Comparing Sharpe ratios for SMB and HML across the periods will provide a clearer perspective. I'll include the UMD factor to compare its performance.
+
+
+*Reviewing Persistence & Similarity*
+
+I've examined the Fama-French factor returns and found that while the magnitude of the size premium is a bit less in the extended sample, the value premium remains robust. Both effects are statistically significant across both periods, though the longer sample displays greater statistical significance. Notably, the market and momentum factor t-statistics are higher, indicating a stronger risk-return relationship in the longer period.
+
+
+*Reviewing Factor Robustness*
+
+I've examined the Fama-French factors in detail. The analysis reveals the value premium persists, while the size premium's statistical significance strengthens. Notably, the market factor's t-statistic is now above 4, highlighting its reinforced role in the longer period, and the momentum factor also indicates very robust results. The value premium remains remarkably strong throughout.
+
+
+
+#+end_reasoning
+
+Yes, a similar pattern is generally found in the longer sample period (January 1927 to December 2024), and in many aspects, the patterns of risk premiums become /more/ statistically significant.
+
+Here's a comparison:
+
+*1. Fama-French 25 Portfolios:*
+
+-   *Mean Excess Returns:*
+    *   *Value Premium (High - Low):* The positive value premium (returns of high book-to-market portfolios exceeding low book-to-market portfolios) is consistently observed across all size quintiles in both periods. The magnitudes are generally similar or slightly higher in the longer period.
+    *   *Size Premium (Small - Big):* The positive size premium (returns of small-cap portfolios exceeding big-cap portfolios) is also present in both periods, especially for higher book-to-market quintiles. While the "Small - Big" value for the lowest book-to-market (growth) quintile is negative in both periods, the overall positive trend across value portfolios (as seen in the "High - Low" column for "Small - Big") remains.
+-   *Standard Deviations:*
+    *   Generally, standard deviations are higher across almost all portfolios in the longer period (1927-2024) compared to the shorter (1963-1991) period. This is expected, as the longer sample includes more volatile economic events like the Great Depression. The pattern of small firms being more volatile than large firms, and growth firms being more volatile than value firms, broadly holds.
+-   *T-Statistics:*
+    *   The statistical significance of both the size and value effects generally holds and often strengthens in the longer period. Many more portfolio returns, especially those reflecting the value and size premiums, exhibit t-statistics well above conventional significance thresholds (e.g., 2), providing stronger statistical evidence for their persistence over a much longer history.
+
+*2. Fama-French Factors (MKTRF, SMB, HML, UMD):*
+
+-   *Mean Returns:*
+    *   All four factors (Market Risk Premium, Small-Minus-Big, High-Minus-Low, and Up-Minus-Down for Momentum) exhibit positive mean returns in both periods.
+    *   The Market Risk Premium (MKTRF) mean is notably higher in the longer sample (0.68% vs 0.41%).
+    *   SMB, HML, and UMD means are slightly lower in the longer sample but remain positive.
+-   *Statistical Significance (T-Statistics):*
+    *   Crucially, the statistical significance of all factors increases in the longer period. MKTRF and SMB, which were borderline significant (t-stats ~1.65) in the original Fama-French period, become much more statistically significant (t-stats > 4 and ~1.94, respectively) over the extended history. HML and UMD, already significant, maintain high levels of significance.
+
+*Conclusion:*
+
+The evidence from the longer sample period strongly reinforces the findings from the original Fama and French period. The size, value, and momentum premiums appear robust and statistically significant across a much broader historical span, even accounting for increased volatility. This supports the notion that these are persistent features of asset returns, rather than just phenomena specific to certain periods.
+
+
+# Local Variables:
+# org-latex-src-block-backend: minted
+# org-latex-tables-booktabs: 't
+# org-babel-min-lines-for-block-output: 1
+# End:
