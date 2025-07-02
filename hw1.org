@@ -3,7 +3,7 @@
 :END:
 #+LATEX_HEADER: \usepackage{fontspec}
 #+LATEX_HEADER: \usepackage[style=apa]{biblatex}
-#+LATEX_HEADER: \setmainfont{Noto Serif CJK JP}
+#+LATEX_HEADER: \setmainfont{Hiragino Meicho ProN}
 #+LATEX_HEADER: \usepackage{booktabs}
 #+LATEX_HEADER: \usepackage[a4paper,left=1.5cm,right=1.5cm,top=2.0cm,bottom=2.0cm]{geometry}
 #+LATEX_HEADER: \usepackage{xcolor}
