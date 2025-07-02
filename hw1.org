@@ -1,8 +1,11 @@
+:PROPERTIES:
+:header-args:python: :session emp_fin :kernel empfin :tangle yes :async yes :exports both :environment minted
+:END:
 #+LATEX_HEADER: \usepackage{fontspec}
 #+LATEX_HEADER: \usepackage[style=apa]{biblatex}
 #+LATEX_HEADER: \setmainfont{Noto Serif CJK JP}
 #+LATEX_HEADER: \usepackage{booktabs}
-#+LATEX_HEADER: \usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.0cm,bottom=2.5cm]{geometry}
+#+LATEX_HEADER: \usepackage[a4paper,left=1.5cm,right=1.5cm,top=2.0cm,bottom=2.0cm]{geometry}
 #+LATEX_HEADER: \usepackage{xcolor}
 #+LATEX_HEADER: \usepackage{minted}
 #+LATEX_HEADER: \setminted{style=friendly, breaklines=true, fontsize=\small}
@@ -26,22 +29,17 @@
 
 
 #+begin_center
-{\Huge\textbf{Empirical Finance}} \\
-{\Large\textbf{Homework 1}} \\
+\Huge\textbf{Empirical Finance} \\
+\Large\textbf{Homework 1} \\
 \vspace{0.5em}
 Jiyan Jonas Schneider (82441028) \\
 \texttt{jiyan.schneider@keio.jp} \\
 \emph{Graduate School of Economics} \\
 \vspace{0.5em}
 #+end_center
-
-* Homework 1
-:PROPERTIES:
-:header-args:python: :session emp_fin :kernel empfin :tangle yes :async yes :exports both :environment minted
-:END:
-
+* Problem 1
 #+begin_quote
-1) Replicate the second panel of their Table 2 (reproduced below for convenience; similar
+1 Replicate the second panel of their Table 2 (reproduced below for convenience; similar
 to Table 0-1 in the introduction of Back (2017)) by “cheating" (skipping
 portfolio formation) as follows: Use the Fama-French 25 portfolios in SAS
 dataset portfolios25.sas7bdat or its corresponding CSV file; use statistical
@@ -129,7 +127,6 @@ shape: (342, 130)
 | 0.0660     | 0.0360     | 0.0532     | … | 19911231 | 1991-12 | 0.0038 |
 #+end_example
 
-This table looks good to me.
 We should take the means for the 25 columns that end with =_vwret=
 We can take the means of those columns like this.
 
@@ -191,8 +188,6 @@ shape: (1, 25)
 These are also slightly different from the original values ...
 Finally, lets look at the t-statistics.
 
-
-
 #+begin_src python :results table
 ts = ems / ( estds / (excess_returns_fama.shape[0] ** 0.5 ))
 ts
@@ -225,8 +220,7 @@ def reshape_to_5x5(df_1x25):
 None
 #+end_example
 
-And then we can finally visualize our results.
-We multiply by 100, because thats what FF 1993 seemed to do.
+And then we can finally visualize our results. We multiply by 100, to replicate the FF1993 paper.
 
 #+begin_src python :results table
 reshape_to_5x5(ems) *100
@@ -246,7 +240,7 @@ shape: (5, 5)
 | 0.3696 | 0.3374 | 0.3558 | 0.5073 | 0.5285 |
 #+end_example
 
-These are the standard deviations.
+Below are the standard deviations.
 
 #+begin_src python :results table
 reshape_to_5x5(estds)
@@ -267,7 +261,7 @@ shape: (5, 5)
 #+end_example
 
 
-And these are the t-stats.
+And below this are the t-stats.
 
 #+begin_src python :results table
 reshape_to_5x5(ts)
@@ -289,7 +283,7 @@ shape: (5, 5)
 
 One more helper for the complete table. This one purely does formatting
 
-#+begin_src python
+#+begin_src python :exports code
 def format_statistic_table(stat_df, is_mean=False):
     table_data = []
     row_labels = ["Small", "2", "3", "4", "Big"]
@@ -329,8 +323,7 @@ def format_statistic_table(stat_df, is_mean=False):
 None
 #+end_example
 
-
-#+begin_src python
+#+begin_src python :results table :exports code
 hl_exprs = [ (pl.col(f"s{i}b5_vwret") - pl.col(f"s{i}b1_vwret")).alias(f"HL_s{i}") for i in range(1, 6)]
 sb_exprs = [(pl.col(f"s1b{i}_vwret") - pl.col(f"s5b{i}_vwret")).alias(f"SB_b{i}") for i in range(1, 6)]
 excess_returns_extended = excess_returns_fama.with_columns(hl_exprs + sb_exprs)
@@ -344,15 +337,20 @@ calculated_stats = excess_returns_extended.select(
 calculated_stats = calculated_stats.with_columns(
     [(pl.col(f"mean_{col}") / (pl.col(f"std_{col}") / (N ** 0.5))).alias(f"tstat_{col}") for col in all_return_cols]
 )
-
+pl.Config.set_tbl_cols(8)
 # Extract the separate mean, std, and t-stat DataFrames (each will be a single row)
 all_means = calculated_stats.select(sc.starts_with("mean_")).rename({col: col.replace("mean_", "") for col in calculated_stats.columns if col.startswith("mean_")})
 all_stds = calculated_stats.select(sc.starts_with("std_")).rename({col: col.replace("std_", "") for col in calculated_stats.columns if col.startswith("std_")})
 all_ts = calculated_stats.select(sc.starts_with("tstat_")).rename({col: col.replace("tstat_", "") for col in calculated_stats.columns if col.startswith("tstat_")})
+#+end_src
 
+#+RESULTS:
+#+begin_example
+None
+#+end_example
 
+#+begin_src python :results table
 mean_returns_table = format_statistic_table(all_means, is_mean=True)
-pl.Config.set_tbl_cols(8) # Set table columns back to 8 again
 mean_returns_table
 #+end_src
 
@@ -371,7 +369,7 @@ shape: (6, 7)
 | Small - Big | -0.0566 | 0.3286 | 0.3825 | 0.3604 | 0.4612 | 0.5178     |
 #+end_example
 
-#+begin_src  python
+#+begin_src  python :results table
 std_devs_table = format_statistic_table(all_stds)
 std_devs_table
 #+end_src
@@ -391,7 +389,7 @@ shape: (6, 7)
 | Small - Big | 0.0535 | 0.0452 | 0.0446 | 0.0401 | 0.0422 | -0.0042    |
 #+end_example
 
-#+begin_src python
+#+begin_src python :results table
 t_stats_table = format_statistic_table(all_ts)
 t_stats_table
 #+end_src
@@ -412,15 +410,14 @@ shape: (6, 7)
 #+end_example
 
 
-** 2
-
+* Problem 2
 #+begin_quote
-2) Calculate and present the mean, standard deviation, and t-statistics of the Fama-French
+2 Calculate and present the mean, standard deviation, and t-statistics of the Fama-French
 three factors (MKTRF, SMB, HML in SAS dataset factors_monthly.sas7bdat, ditto)
 and the momentum factor (UMD) for the same sample period.
 #+end_quote
 
-#+begin_src python
+#+begin_src python :results table
 factors_fama_period = factors_df.filter((pl.col("ym") >= "1963-07") & (pl.col("ym") <= "1991-12"))
 factor_cols = ["mktrf", "smb", "hml", "umd"]
 N_factors = factors_fama_period.shape[0]
@@ -458,14 +455,14 @@ shape: (4, 4)
 | umd    | 0.8405   | 0.0347             | 4.4836      |
 #+end_example
 
-** 3
 
+* Problem 3
 #+begin_quote
-1) Repeat Parts 1) and 2) for the period from January 1927 to December 2024. Do you find a similar pattern in this longer sample?
+3 Repeat Parts 1) and 2) for the period from January 1927 to December 2024. Do you find a similar pattern in this longer sample?
 #+end_quote
 
 
-#+begin_src python
+#+begin_src python :results table
 long_period = df.filter((pl.col("ym") >= "1927-01") & (pl.col("ym") <= "2024-12"))
 excess_returns_long = long_period.with_columns((sc.ends_with("_vwret") - pl.col("rf")))
 excess_returns_long_extended = excess_returns_long.with_columns(hl_exprs + sb_exprs)
@@ -505,7 +502,7 @@ shape: (6, 7)
 | Small - Big | -0.1315 | 0.0350 | 0.2788 | 0.4824 | 0.3916 | 0.5231     |
 #+end_example
 
-#+begin_src python
+#+begin_src python :results table
 std_devs_table_long
 #+end_src
 
@@ -525,7 +522,7 @@ shape: (6, 7)
 #+end_example
 
 
-#+begin_src python
+#+begin_src python :results table
 t_stats_table_long
 #+end_src
 
@@ -544,7 +541,7 @@ shape: (6, 7)
 | Small - Big | -0.4763 | 0.1665 | 1.5934 | 3.2187 | 2.2151 | 2.1657     |
 #+end_example
 
-#+begin_src python
+#+begin_src python :results table
 factors_long_period = factors_df.filter((pl.col("ym") >= "1927-01") & (pl.col("ym") <= "2024-12"))
 N_factors_long = factors_long_period.shape[0]
 
@@ -579,81 +576,23 @@ shape: (4, 4)
 #+end_example
 
 
-Could you also answer the question he is asking?
-
-
-
-#+begin_reasoning
-**Assessing Period Similarities*
-
-I'm analyzing the results of the Fama-French 25 portfolios and factors across the two periods to identify any patterns. Comparing the July 1963 - December 1991 period with the longer sample is key. I'll need to meticulously evaluate the performance data for similarities.
-
-
-*Comparing Performance Data*
-
-I've dived deep into the mean excess returns of the Fama-French 25 portfolios.  I'm now focusing on the size and value effects to see how they stack up. It's becoming clearer where the similarities lie. The SMB and HML figures offer interesting contrasts between the datasets, and their t-statistics are a key indicator. I plan to check out the variance next.
-
-
-*Investigating Volatilities*
-
-I'm now focusing on standard deviations. I've calculated the standard deviations for both Fama-French 25 portfolios and factors for each period. Observing the data, it appears that volatilities are generally higher in the longer period, especially in the 25 portfolios. I'm keen to see if any specific patterns emerge. I plan to use this to calculate Sharpe ratios to check if risk-adjusted returns are affected. I'll focus on SMB and HML now.
-
-
-*Evaluating T-Stat Significance*
-
-I've examined the T-statistics for the portfolios, and in both periods, the value premium remains statistically significant. The size premium also has statistical significance, particularly in the longer dataset.  While the t-stats for the small-cap, low B/M firms in the original period show less significance. This leads to a nuanced answer to the question.
-
-
-*Confirming Persistence Trends*
-
-I'm now focusing on a more nuanced comparison. I've seen that the value premium persists statistically in both periods, and the size effect generally holds, with interesting differences. The volatility data also shows higher standard deviations in the longer sample. Next, I plan to analyze the Fama-French factors to get more insights. I will calculate Sharpe ratios for factors and portfolios.
-
-
-*Revising Factor Analysis*
-
-I'm now calculating Sharpe ratios for both the factors and the Fama-French portfolios to provide further insights. Comparing Sharpe ratios for SMB and HML across the periods will provide a clearer perspective. I'll include the UMD factor to compare its performance.
-
-
-*Reviewing Persistence & Similarity*
-
-I've examined the Fama-French factor returns and found that while the magnitude of the size premium is a bit less in the extended sample, the value premium remains robust. Both effects are statistically significant across both periods, though the longer sample displays greater statistical significance. Notably, the market and momentum factor t-statistics are higher, indicating a stronger risk-return relationship in the longer period.
-
-
-*Reviewing Factor Robustness*
-
-I've examined the Fama-French factors in detail. The analysis reveals the value premium persists, while the size premium's statistical significance strengthens. Notably, the market factor's t-statistic is now above 4, highlighting its reinforced role in the longer period, and the momentum factor also indicates very robust results. The value premium remains remarkably strong throughout.
-
-
-
-#+end_reasoning
-
-Yes, a similar pattern is generally found in the longer sample period (January 1927 to December 2024), and in many aspects, the patterns of risk premiums become /more/ statistically significant.
-
-Here's a comparison:
-
+A similar pattern to the original paper is generally found in the longer sample period (January 1927 to December 2024), and in many aspects, the patterns of risk premiums become more statistically significant.
 *1. Fama-French 25 Portfolios:*
-
--   *Mean Excess Returns:*
-    *   *Value Premium (High - Low):* The positive value premium (returns of high book-to-market portfolios exceeding low book-to-market portfolios) is consistently observed across all size quintiles in both periods. The magnitudes are generally similar or slightly higher in the longer period.
-    *   *Size Premium (Small - Big):* The positive size premium (returns of small-cap portfolios exceeding big-cap portfolios) is also present in both periods, especially for higher book-to-market quintiles. While the "Small - Big" value for the lowest book-to-market (growth) quintile is negative in both periods, the overall positive trend across value portfolios (as seen in the "High - Low" column for "Small - Big") remains.
--   *Standard Deviations:*
-    *   Generally, standard deviations are higher across almost all portfolios in the longer period (1927-2024) compared to the shorter (1963-1991) period. This is expected, as the longer sample includes more volatile economic events like the Great Depression. The pattern of small firms being more volatile than large firms, and growth firms being more volatile than value firms, broadly holds.
--   *T-Statistics:*
-    *   The statistical significance of both the size and value effects generally holds and often strengthens in the longer period. Many more portfolio returns, especially those reflecting the value and size premiums, exhibit t-statistics well above conventional significance thresholds (e.g., 2), providing stronger statistical evidence for their persistence over a much longer history.
+- *Mean Excess Returns:*
+  * *Value Premium (High - Low):* The positive value premium (returns of high book-to-market portfolios exceeding low book-to-market portfolios) is consistently observed across all size quintiles in both periods. The magnitudes are generally similar or slightly higher in the longer period.
+  * *Size Premium (Small - Big):* The positive size premium (returns of small-cap portfolios exceeding big-cap portfolios) is also present in both periods, especially for higher book-to-market quintiles. While the "Small - Big" value for the lowest book-to-market (growth) quintile is negative in both periods, the overall positive trend across value portfolios (as seen in the "High - Low" column for "Small - Big") remains.
+- *Standard Deviations:*
+  * Generally, standard deviations are higher across almost all portfolios in the longer period (1927-2024) compared to the shorter (1963-1991) period. This is expected, as the longer sample includes more volatile economic events like the Great Depression. The pattern of small firms being more volatile than large firms, and growth firms being more volatile than value firms, broadly holds.
+- *T-Statistics:*
+  * The statistical significance of both the size and value effects generally holds and often strengthens in the longer period. Many more portfolio returns, especially those reflecting the value and size premiums, exhibit t-statistics well above conventional significance thresholds (e.g., 2), providing stronger statistical evidence for their persistence over a much longer history.
 
 *2. Fama-French Factors (MKTRF, SMB, HML, UMD):*
-
--   *Mean Returns:*
-    *   All four factors (Market Risk Premium, Small-Minus-Big, High-Minus-Low, and Up-Minus-Down for Momentum) exhibit positive mean returns in both periods.
-    *   The Market Risk Premium (MKTRF) mean is notably higher in the longer sample (0.68% vs 0.41%).
-    *   SMB, HML, and UMD means are slightly lower in the longer sample but remain positive.
--   *Statistical Significance (T-Statistics):*
-    *   Crucially, the statistical significance of all factors increases in the longer period. MKTRF and SMB, which were borderline significant (t-stats ~1.65) in the original Fama-French period, become much more statistically significant (t-stats > 4 and ~1.94, respectively) over the extended history. HML and UMD, already significant, maintain high levels of significance.
-
-*Conclusion:*
-
-The evidence from the longer sample period strongly reinforces the findings from the original Fama and French period. The size, value, and momentum premiums appear robust and statistically significant across a much broader historical span, even accounting for increased volatility. This supports the notion that these are persistent features of asset returns, rather than just phenomena specific to certain periods.
-
+- *Mean Returns:*
+  * All four factors (Market Risk Premium, Small-Minus-Big, High-Minus-Low, and Up-Minus-Down for Momentum) exhibit positive mean returns in both periods.
+  * The Market Risk Premium (MKTRF) mean is notably higher in the longer sample (0.68% vs 0.41%).
+  * SMB, HML, and UMD means are slightly lower in the longer sample but remain positive.
+- *Statistical Significance (T-Statistics):*
+  * Crucially, the statistical significance of all factors increases in the longer period. MKTRF and SMB, which were borderline significant (t-stats ~1.65) in the original Fama-French period, become much more statistically significant (t-stats > 4 and ~1.94, respectively) over the extended history. HML and UMD, already significant, maintain high levels of significance.
 
 # Local Variables:
 # org-latex-src-block-backend: minted
