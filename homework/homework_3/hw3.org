@@ -131,3 +131,4 @@ I also conducted the Newey-West procedure and the Shanken Correction to see what
 #+ATTR_LATEX: :width 9cm
 [[file:./corrected_standard_errors_full_period.jpg]]
 
+
