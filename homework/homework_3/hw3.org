@@ -1,0 +1,26 @@
+#+title: Hw3
+*** High-Level Summary
+
+Your analysis successfully replicates the famous conclusion from Fama and French's 1993 paper, "Common risk factors in the returns on stocks and bonds."
+
+1.  *The CAPM Fails:* For the 1963-1991 period, both the GRS test and the Fama-MacBeth regressions show that the CAPM is a poor model for explaining the returns of these 25 portfolios.
+2.  *The Fama-French 3-Factor Model Succeeds:* For the same period, the 3-factor model does a much better job. It is not rejected by the GRS test, and it identifies a significant risk premium for the value factor (HML).
+
+*** Detailed Interpretation (1963-1991 Period)
+
+**** 1. CAPM Results
+-   *GRS Test (p-value: 0.0033):* This is highly significant. The null hypothesis of the GRS test is that the alphas (the intercepts from the time-series regressions) are all jointly equal to zero. Since the p-value is less than 0.05, you *reject the null hypothesis*. This is strong evidence that the CAPM cannot explain the returns of all 25 portfolios.
+-   *Fama-MacBeth (mktrf premium):* The estimated risk premium for the market factor is small, negative, and statistically insignificant (p-value: 0.6167). The CAPM predicts this premium should be positive and significant. This is another major failure of the model. The model's single factor has no explanatory power for the cross-section of returns.
+-   *Fama-MacBeth (Intercept):* The intercept is positive and statistically significant (p-value: 0.0228). A good asset pricing model should have an intercept of zero. A significant intercept means there are systematic pricing errors.
+
+*Conclusion:* The CAPM fails on all counts for this period.
+
+**** 2. Fama-French 3-Factor Results
+-   *GRS Test (p-value: 0.0758):* This p-value is /greater/ than 0.05. Therefore, you *fail to reject the null hypothesis*. This means that adding the SMB (size) and HML (value) factors successfully explains away the pricing errors (alphas) that the CAPM could not. This is a huge success for the 3-factor model.
+-   *Fama-MacBeth (Factor Premia):*
+    *   The premium for *HML is 0.43% per month and highly significant* (t-stat = 3.03). This is the key result: the value factor is a priced risk factor.
+    *   The premium for SMB is positive but not statistically significant in this specification. This is also a common finding.
+    *   The premium for the market is still insignificant.
+-   *Fama-MacBeth (Intercept):* The intercept is now much smaller and, most importantly, *statistically insignificant* (p-value: 0.1004). This shows that SMB and HML have "soaked up" the pricing errors of the CAPM.
+
+*Conclusion:* The 3-factor model is a vast improvement over the CAPM, explaining the cross-section of returns much more effectively.
