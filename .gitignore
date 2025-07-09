@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+*.el
+*.bbl
+*.bcf
+*.aux
+*.fls
+*.blg
+*.fdb_latexmk
+*.log
+/homework/homework_2/homework2.run.xml
+*.xdv

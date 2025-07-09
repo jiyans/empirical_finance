@@ -1,0 +1,129 @@
+:PROPERTIES:
+:header-args:python: :session emp_fin :kernel empfin :tangle yes :async yes :exports both :environment minted
+:END:
+#+LATEX_HEADER: \usepackage[style=apa]{biblatex}
+#+LATEX_HEADER: \usepackage[a4paper,left=1.5cm,right=1.5cm,top=2.0cm,bottom=2.0cm]{geometry}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \setminted{style=friendly, breaklines=true, fontsize=\small}
+#+LATEX_HEADER: \usepackage{mdframed}
+#+LATEX_HEADER: \surroundwithmdframed[
+#+LATEX_HEADER:     backgroundcolor=gray!5, % A very light gray background
+#+LATEX_HEADER:     roundcorner=4pt,        % Slightly rounded corners
+#+LATEX_HEADER:     innertopmargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerbottommargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerrightmargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerleftmargin=0.5\baselineskip,
+#+LATEX_HEADER:     linecolor=gray!20,      % A subtle border line
+#+LATEX_HEADER:     linewidth=0.4pt,
+#+LATEX_HEADER:     outermargin=0pt,
+#+LATEX_HEADER:     skipabove=1em,
+#+LATEX_HEADER:     skipbelow=1em
+#+LATEX_HEADER: ]{quote}
+#+LATEX_HEADER: \setminted{style=friendly,breaklines=true,fontsize=\small,bgcolor=gray!5}
+#+OPTIONS: toc:nil
+
+#+begin_center
+\Huge\textbf{Empirical Finance} \\
+\Large\textbf{Homework 2} \\
+\vspace{0.5em}
+Jiyan Jonas Schneider (82441028) \\
+\texttt{jiyan.schneider@keio.jp} \\
+\emph{Graduate School of Economics} \\
+\vspace{0.5em}
+#+end_center
+
+* Start                                                                         :ATTACH:
+:PROPERTIES:
+:ID:       a00c1759-90a9-4a00-ab80-e11eaf0ebe0a
+:END:
+#+begin_quote
+Problem 1) The CSV files =df_long_NYSE.csv= and =df_long_NASDAQ.csv= on Canvas contain monthly
+individual stock data on the New York Stock Exchange (NYSE) and NASDAQ (Global
+Select), respectively. They were downloaded using the Python program,
+=a1_download_prices.py.= It obtains ticker symbols available at the time of running from
+the following URL:
+a) NYSE: https://www.nasdaqtrader.com/dynamic/symdir/otherlisted.txt
+b) NASDAQ: https://www.nasdaqtrader.com/dynamic/symdir/nasdaqlisted.txt
+c) Compute returns as the relative change in closing price (Close) from the previous day.
+The first return on each stock should be missing. Do not fill missing returns with zero.
+#+end_quote
+
+Here are the calculated returns for problem 2. We check that the first number for all symbols is missing.
+[[attachment:returns.jpg]]
+
+
+#+begin_quote
+Problem 2. Implement Momentum Strategy and Form Portfolios
+#+end_quote
+
+Next, we get the momentum portfolios. We get them in the code, but for ease of viewing I will only show the returns of the decile portfolios.
+
+[[attachment:nyse_portfolios.jpg]]
+
+Next are the nasdaq portfolios
+
+[[attachment:nasdaq portfolios.jpg]]
+
+#+begin_quote
+Problem 3. Analyze and Tabulate Results
+#+end_quote
+
+These are the nyse analysis results (Mean return and t-values)
+[[attachment:nyse_analysis_results.jpg]]
+
+jAnd here are the nasdaq analysis results.
+[[attachment:nasdaq_analysis_results.jpg]]
+
+
+Also for a check, here are the bar plots for the avg number of stocks in the portfolios
+NYSE:
+[[attachment:nyse_avg_stocks.jpg]]
+
+NASDAQ
+[[attachment:nasdaq_avg_stocks.jpg]]
+
+
+#+begin_quote
+Problem 4. Compare NYSE and NASDAQ
+#+end_quote
+
+
+Calculate the difference in returns between the corresponding deciles and test if the difference is statistically significant.
+
+
+[[attachment:diff.jpg]]
+
+1. *Statistical Significance*:
+   - All deciles in both markets show statistically significant returns (p-values < 0.05)
+   - The t-statistics are generally strong (>2) for all deciles
+   - NYSE shows particularly strong significance in the extreme deciles (0 and 9)
+
+2. *Return Patterns*:
+   - Both markets show evidence of momentum effect:
+     - NYSE: Decile 0 (21.69%) and Decile 9 (20.73%)
+     - NASDAQ: Decile 0 (29.01%) and Decile 9 (22.88%)
+   - NASDAQ shows more extreme momentum returns:
+     - Higher returns in the top decile
+     - Larger spread between extreme deciles
+     - This suggests momentum effects are stronger in NASDAQ stocks, which feels intuitive because the nasdaq has more growth stocks.
+
+3. *Comparison*:
+   - NASDAQ has generally higher returns across deciles
+   - The spread between extreme deciles is:
+     - NYSE: ~0.957% (21.69% - 20.73%)
+     - NASDAQ: ~6.13% (29.01% - 22.88%)
+   - This suggests momentum strategies might be more profitable in NASDAQ stocks
+
+4. *Economic Significance*:
+   - The returns are economically meaningful
+   - Monthly returns of 2-3% in extreme deciles suggest substantial investment opportunities
+   - The effect is persistent across both markets
+
+#+begin_quote
+Problem 5. Potential concerns
+#+end_quote
+
+My first thoughts for the two biggest potential concerns were
+1. Survivorship bias, I would guess that usually, such data would show us only the past values for stocks that are currently still there, so companies that went bankrupt won't be in here.
+2. Are dividends, stock buybacks or stock splits considered in this dataset?
