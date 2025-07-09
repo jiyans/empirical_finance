@@ -41,7 +41,7 @@ Jiyan Jonas Schneider (82441028) \\
 Problem 1) Evaluate the performance of the Capital Asset Pricing Model (CAPM).
 #+end_quote
 
-[[attachment:fama_1963_1991.jpg]]
+[[file:./fama_1963_1991.jpg]]
 
 1. *Gibbons-Ross-Shanken (GRS) Test:*
    - The GRS statistic is 2.0171 with a *p-value of 0.0033*.
@@ -60,7 +60,7 @@ Problem 2) Evaluate the performance of the Fama-French 3-Factor (FF3) Model and 
 
 Overall, the Fama-French 3-Factor model performs significantly better than the CAPM and we can't reject it based on our data.
 
-[[attachment:ff3_mod_comp.jpg]]
+[[file:./ff3_mod_comp.jpg]]
 
 
 1.  *Gibbons-Ross-Shanken (GRS) Test:*
@@ -84,11 +84,11 @@ Problem 3) Discuss the effect of using different standard error corrections (New
 
 These are the results for if we do the corrections for the CAPM for the first period (1963-1991)
 
-[[attachment:corrections_for_capm.jpg]]
+[[file:./corrections_for_capm.jpg]]
 
 and these are the results when doing the corrections for the FF3 model in the same period.
 
-[[attachment:comp_ff3_first_period.jpg]]
+[[file:./comp_ff3_first_period.jpg]]
 
 Repeating the earlier point, we can see that although the standard erros (and thus p-values and t-staticics) change, they do not influence the results we found in the previous two questions.
 
@@ -101,11 +101,11 @@ Over the full sample we find that both models perform poorly especially accordin
 
 These are the results for the CAPM over the full sample.
 
-[[attachment:capm_full.jpg]]
+[[file:./capm_full.jpg]]
 
 And here are the results for FF3 model over the full sample.
 
-[[attachment:ff3_full_sample.jpg]]
+[[file:./ff3_full_sample.jpg]]
 
 We can see that the CAPM is still performing poorly with both procedures. Furthermore we see that the FF3 model also starts to falter.
 The intercept is now statistically significant. SMB stayed statisticially insignificant. HML did stay statistically significant, which is good, but
@@ -113,4 +113,4 @@ The intercept is now statistically significant. SMB stayed statisticially insign
 
 I also conducted the Newey-West procedure and the Shanken Correction to see what would happen, because I thought it might make the mktrf coefficient at least be insignificant, however even with the adjusted standard errors, the results don't change.
 
-[[attachment:corrected_standard_errors_full_period.jpg]]
+[[file:./corrected_standard_errors_full_period.jpg]]
