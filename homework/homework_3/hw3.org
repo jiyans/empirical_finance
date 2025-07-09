@@ -1,26 +1,116 @@
+:PROPERTIES:
+:ID:       270359d0-1370-4a52-9304-2cf05623af8c
+:END:
 #+title: Hw3
-*** High-Level Summary
+:PROPERTIES:
+:header-args:python: :session emp_fin :kernel empfin :tangle yes :async yes :exports both :environment minted
+:END:
+#+LATEX_HEADER: \usepackage[style=apa]{biblatex}
+#+LATEX_HEADER: \usepackage[a4paper,left=1.5cm,right=1.5cm,top=2.0cm,bottom=2.0cm]{geometry}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \setminted{style=friendly, breaklines=true, fontsize=\small}
+#+LATEX_HEADER: \usepackage{mdframed}
+#+LATEX_HEADER: \surroundwithmdframed[
+#+LATEX_HEADER:     backgroundcolor=gray!5, % A very light gray background
+#+LATEX_HEADER:     roundcorner=4pt,        % Slightly rounded corners
+#+LATEX_HEADER:     innertopmargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerbottommargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerrightmargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerleftmargin=0.5\baselineskip,
+#+LATEX_HEADER:     linecolor=gray!20,      % A subtle border line
+#+LATEX_HEADER:     linewidth=0.4pt,
+#+LATEX_HEADER:     outermargin=0pt,
+#+LATEX_HEADER:     skipabove=1em,
+#+LATEX_HEADER:     skipbelow=1em
+#+LATEX_HEADER: ]{quote}
+#+LATEX_HEADER: \setminted{style=friendly,breaklines=true,fontsize=\small,bgcolor=gray!5}
+#+OPTIONS: toc:nil
 
-Your analysis successfully replicates the famous conclusion from Fama and French's 1993 paper, "Common risk factors in the returns on stocks and bonds."
+#+begin_center
+\Huge\textbf{Empirical Finance} \\
+\Large\textbf{Homework 3} \\
+\vspace{0.5em}
+Jiyan Jonas Schneider (82441028) \\
+\texttt{jiyan.schneider@keio.jp} \\
+\emph{Graduate School of Economics} \\
+\vspace{0.5em}
+#+end_center
 
-1.  *The CAPM Fails:* For the 1963-1991 period, both the GRS test and the Fama-MacBeth regressions show that the CAPM is a poor model for explaining the returns of these 25 portfolios.
-2.  *The Fama-French 3-Factor Model Succeeds:* For the same period, the 3-factor model does a much better job. It is not rejected by the GRS test, and it identifies a significant risk premium for the value factor (HML).
+#+begin_quote
+Problem 1) Evaluate the performance of the Capital Asset Pricing Model (CAPM).
+#+end_quote
 
-*** Detailed Interpretation (1963-1991 Period)
+[[attachment:fama_1963_1991.jpg]]
 
-**** 1. CAPM Results
--   *GRS Test (p-value: 0.0033):* This is highly significant. The null hypothesis of the GRS test is that the alphas (the intercepts from the time-series regressions) are all jointly equal to zero. Since the p-value is less than 0.05, you *reject the null hypothesis*. This is strong evidence that the CAPM cannot explain the returns of all 25 portfolios.
--   *Fama-MacBeth (mktrf premium):* The estimated risk premium for the market factor is small, negative, and statistically insignificant (p-value: 0.6167). The CAPM predicts this premium should be positive and significant. This is another major failure of the model. The model's single factor has no explanatory power for the cross-section of returns.
--   *Fama-MacBeth (Intercept):* The intercept is positive and statistically significant (p-value: 0.0228). A good asset pricing model should have an intercept of zero. A significant intercept means there are systematic pricing errors.
+1. *Gibbons-Ross-Shanken (GRS) Test:*
+   - The GRS statistic is 2.0171 with a *p-value of 0.0033*.
+   - The null hypothesis of the GRS test is that the alphas (pricing errors) of all 25 portfolios are jointly zero.
+   - Since the p-value is less than 0.05, we *strongly reject the null hypothesis*. This is strong evidence that the CAPM fails to explain the returns of the 25 portfolios.
 
-*Conclusion:* The CAPM fails on all counts for this period.
+2. *Fama-MacBeth Procedure:*
+   - *Market Premium (mktrf):* The estimated risk premium for the market factor is statistically *insignificant* (p-value = 0.6167). The CAPM predicts this should be positive and significant. This is a major failure of the model.
+   - *Intercept (Alpha):* The average intercept from the cross-sectional regressions is positive and *statistically significant* (p-value = 0.0228). A good asset pricing model should have an intercept of zero. A significant intercept indicates systematic mispricing that the model cannot explain.
 
-**** 2. Fama-French 3-Factor Results
--   *GRS Test (p-value: 0.0758):* This p-value is /greater/ than 0.05. Therefore, you *fail to reject the null hypothesis*. This means that adding the SMB (size) and HML (value) factors successfully explains away the pricing errors (alphas) that the CAPM could not. This is a huge success for the 3-factor model.
--   *Fama-MacBeth (Factor Premia):*
-    *   The premium for *HML is 0.43% per month and highly significant* (t-stat = 3.03). This is the key result: the value factor is a priced risk factor.
-    *   The premium for SMB is positive but not statistically significant in this specification. This is also a common finding.
-    *   The premium for the market is still insignificant.
--   *Fama-MacBeth (Intercept):* The intercept is now much smaller and, most importantly, *statistically insignificant* (p-value: 0.1004). This shows that SMB and HML have "soaked up" the pricing errors of the CAPM.
+Thus both tests reject the CAPM, and we have to conclude that the model does not sufficiently explain the cross-section of stock returns in this period.
 
-*Conclusion:* The 3-factor model is a vast improvement over the CAPM, explaining the cross-section of returns much more effectively.
+#+begin_quote
+Problem 2) Evaluate the performance of the Fama-French 3-Factor (FF3) Model and compare it to the CAPM.
+#+end_quote
+
+Overall, the Fama-French 3-Factor model performs significantly better than the CAPM and we can't reject it based on our data.
+
+[[attachment:ff3_mod_comp.jpg]]
+
+
+1.  *Gibbons-Ross-Shanken (GRS) Test:*
+    - The GRS statistic is 1.4581 with a *p-value of 0.0758*.
+    - Since this p-value is greater than 0.05, we *fail to reject the null hypothesis*.
+    - This means that means that adding the size (SMB) and value (HML) factors explains the pricing errors that were present in the CAPM and that the FF3 model is better in describing Asset returns than the CAPM.
+
+2.  *Fama-MacBeth Procedure:*
+    - *Value Premium (hml):* The estimated risk premium for the value factor is 0.43% per month and is *highly statistically significant* (t-stat = 3.03, p-value = 0.0026). This indicates that value is a priced risk factor.
+    - *Size Premium (smb):* The size premium is positive but not statistically significant.
+    - *Intercept (Alpha):* The intercept is now *statistically insignificant* (p-value = 0.1004). This is another sign of a well-specified model, as it shows that the three factors account for the returns, leaving no significant unexplained portion.
+
+
+Thus we can see that the FF3 model is not rejected by the GRS test, and also produces a non-significant alpha. Furthermore it identifies the value factor (HML) as a significant source of priced risk in the cross-section of stock returns.
+
+#+begin_quote
+Problem 3) Discuss the effect of using different standard error corrections (Newey-West, Shanken).
+#+end_quote
+- *Newey-West:* The Newey-West correction accounts for autocorrelation in the lambda time series. For both models, this correction slightly *increases* the standard errors and thus *lowers* the t-statistics. For example, in the FF3 model, the t-statistic for HML drops from 3.03 to 2.59, but remains highly statically significant. This suggests some autocorrelation is present, but it does not change the main conclusions.
+- *Shanken Correction:* The Shanken correction accounts for the fact that the betas used in the second pass are estimated with error. This correction also slightly *increases* the standard errors. For example, the t-statistic for HML in the FF3 model drops from 3.03 to 2.96. Again, the change is minor and does not alter the conclusion that HML is a priced factor.
+
+These are the results for if we do the corrections for the CAPM for the first period (1963-1991)
+
+[[attachment:corrections_for_capm.jpg]]
+
+and these are the results when doing the corrections for the FF3 model in the same period.
+
+[[attachment:comp_ff3_first_period.jpg]]
+
+Repeating the earlier point, we can see that although the standard erros (and thus p-values and t-staticics) change, they do not influence the results we found in the previous two questions.
+
+
+#+begin_quote
+Problem 4) How do the models perform over the full sample period?
+#+end_quote
+
+Over the full sample we find that both models perform poorly especially according to the GRS test
+
+These are the results for the CAPM over the full sample.
+
+[[attachment:capm_full.jpg]]
+
+And here are the results for FF3 model over the full sample.
+
+[[attachment:ff3_full_sample.jpg]]
+
+We can see that the CAPM is still performing poorly with both procedures. Furthermore we see that the FF3 model also starts to falter.
+The intercept is now statistically significant. SMB stayed statisticially insignificant. HML did stay statistically significant, which is good, but
+=mktrf=, the market factor, actually switched signs.
+
+I also conducted the Newey-West procedure and the Shanken Correction to see what would happen, because I thought it might make the mktrf coefficient at least be insignificant, however even with the adjusted standard errors, the results don't change.
+
+[[attachment:corrected_standard_errors_full_period.jpg]]

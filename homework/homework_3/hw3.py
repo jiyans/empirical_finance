@@ -8,7 +8,6 @@ from scipy import stats
 # %%
 
 def perform_grs_test(df, assets, factors):
-    """Performs the Gibbons-Ross-Shanken (GRS) test."""
     T, N = df.shape[0], len(assets)
     K = len(factors)
 
@@ -47,16 +46,18 @@ def perform_grs_test(df, assets, factors):
 
 def perform_fama_macbeth(df, assets, factors, nw_lags=None, shanken_correction=False):
     """Performs the Fama-MacBeth two-pass regression."""
-    # Pass 1: Time-series regression for each asset to get betas
+    # Step 1: Time-series regression for each asset to get betas
     betas = pd.DataFrame(index=assets, columns=factors)
     X_ts = sm.add_constant(df[factors])
     for asset in assets:
         y_ts = df[asset]
+        # We simply use statsmodels to do the OLS estimation
         model = sm.OLS(y_ts, X_ts).fit()
         betas.loc[asset] = model.params[1:]
 
     betas = betas.astype(float)
-    # Pass 2: Cross-sectional regression for each time period
+
+    # Step 2: Cross-sectional regression for each time period
     lambdas = []
     X_cs = sm.add_constant(betas)
     for t in df.index:
@@ -77,9 +78,7 @@ def perform_fama_macbeth(df, assets, factors, nw_lags=None, shanken_correction=F
         cov_type = 'HAC'
         cov_kwds = {'maxlags': nw_lags}
     else:
-        # Handle both standard and Shanken corrections
         # Calculate the standard Fama-MacBeth standard error of the mean directly.
-        # This is more efficient and avoids the multivariate OLS bug.
         se_fm = lambdas_df.std() / np.sqrt(len(lambdas_df))
 
         if shanken_correction:
@@ -88,15 +87,14 @@ def perform_fama_macbeth(df, assets, factors, nw_lags=None, shanken_correction=F
             Sigma_F = df[factors].cov()
             mu_F = df[factors].mean()
             c = 1 + mu_F.T @ np.linalg.inv(Sigma_F) @ mu_F
-
             # Apply correction
             results['Std. Error'] = se_fm * np.sqrt(c)
         else: # Standard Fama-MacBeth
-            title += " (Standard)" # Added for clarity
+            title += " (Standard)"
             results['Std. Error'] = se_fm
 
     if nw_lags is not None:
-        # For NW, fit each lambda series separately
+        # For Newey-West, fit each lambda series separately
         for col in lambdas_df.columns:
             model = sm.OLS(lambdas_df[col], np.ones(len(lambdas_df))).fit(cov_type=cov_type, cov_kwds=cov_kwds)
             results.loc[col, 'Std. Error'] = model.bse[0]
@@ -126,47 +124,6 @@ def perform_fama_macbeth(df, assets, factors, nw_lags=None, shanken_correction=F
     print("-" * 60)
     print()
 
-
-def run_analysis():
-    """Main function to run all tests for all specifications and periods."""
-    data, assets = load_and_prepare_data('portfolios25.csv', 'factors_monthly.csv')
-
-    periods = {
-        "1963-07 to 1991-12": ('1963-07-01', '1991-12-31'),
-        "1927-01 to 2024-12": ('1927-01-01', '2024-12-31')
-    }
-
-    models = {
-        "CAPM": ['Mkt-RF'],
-        "Fama-French 3-Factor": ['Mkt-RF', 'SMB', 'HML']
-    }
-
-    for period_name, (start, end) in periods.items():
-        period_data = data.loc[start:end].copy()
-        if period_data.empty:
-            print(f"Skipping period {period_name}: No data available.")
-            continue
-
-        T = len(period_data)
-        nw_lags = int(np.floor(4 * (T / 100)**(2/9)))
-
-        for model_name, factors in models.items():
-            print(f"--- {model_name} Results for {period_name} ---")
-
-            # 1) GRS Test
-            perform_grs_test(period_data, assets, factors)
-
-            # 2) Standard Fama-MacBeth
-            perform_fama_macbeth(period_data, assets, factors)
-
-            # 3) FM with Newey-West
-            perform_fama_macbeth(period_data, assets, factors, nw_lags=nw_lags)
-
-            # 4) FM with Shanken Correction
-            perform_fama_macbeth(period_data, assets, factors, shanken_correction=True)
-
-if __name__ == '__main__':
-    run_analysis()
 
 # %%
 port_file, factor_file = 'portfolios25.csv', 'factors_monthly.csv'
@@ -214,6 +171,7 @@ data.sort_index(inplace=True)
 
 assets = asset_cols
 # %%
+# Model and period declaration in a dictionary for easy printing and loping
 periods = {
     "1963-07 to 1991-12": ('1963-07-01', '1991-12-31'),
     "1927-01 to 2024-12": ('1927-01-01', '2024-12-31')
@@ -225,15 +183,16 @@ models = {
 }
 # %%
 
+# For each period
 for period_name, (start, end) in periods.items():
     period_data = data.loc[start:end].copy()
-    if period_data.empty:
-        print(f"Skipping period {period_name}: No data available.")
-        continue
 
+    # Get number of time steps
     T = len(period_data)
+    # Newey lags
     nw_lags = int(np.floor(4 * (T / 100)**(2/9)))
 
+    # For each of the two models do the four procedures
     for model_name, factors in models.items():
         print(f"--- {model_name} Results for {period_name} ---")
 
@@ -248,3 +207,6 @@ for period_name, (start, end) in periods.items():
 
         # 4) FM with Shanken Correction
         perform_fama_macbeth(period_data, assets, factors, shanken_correction=True)
+
+# %%
+#
