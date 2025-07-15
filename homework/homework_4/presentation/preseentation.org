@@ -1,0 +1,292 @@
+#+title: Empirical Finance - Research Proposal
+#+SUBTITLE: Finding Scaling Laws in Financial data
+#+Bibliography: local-bib.bib
+#+BEAMER_FRAME_LEVEL: 2
+#+OPTIONS: H:4 toc:1 num:nil
+#+EMAIL: jiyan.schneider@keio.jp
+#+AUTHOR: Jiyan Schneider
+#+OPTIONS: reveal_history:t reveal_fragmentinurl:t
+
+:REVEAL_PROPERTIES:
+#+REVEAL_TITLE_SLIDE: <h1>%t</h1><br><h2>%s</h2><br><h4>%a</h4><br>Keio University, Graduate school of Economics
+#+REVEAL_ROOT: ./reveal.js/
+#+REVEAL_EXTRA_CSS: custom.css
+#+REVEAL_THEME: serif
+#+REVEAL_TRANS: linear
+#+REVEAL_HLEVEL: 1
+:END:
+* Introduction
+#+BEGIN_NOTES
+#+END_NOTES
+*** Price structure of real estate
+#+BEGIN_NOTES
+#+END_NOTES
+
+#+begin_export html
+<br>
+<br>
+<br>
+#+end_export
+| Structural                    | Environmental               |
+|-------------------------------+-----------------------------|
+| Apartment size                | Name of Closest station     |
+| Floor of apartment            | No. of supermarkets         |
+| Material used in construction | Distance to the city center |
+| Floor layout                  | No. of schools              |
+| Kitchen Space                 | No. of Parks                |
+| Interior design and finish    |                             |
+#+begin_export html
+<br>
+#+end_export
+*** Machine Learning in real estate
+#+BEGIN_NOTES
+Moving on to past research about machine learning in real estate
+ - [cite:@hattori2019rent] use PCA to extract feature vectors from floorplans
+   - They use it in various models
+   - While they note slight improvements, they say that it is challenging to find merits for their improvements, because they are too small
+ - [cite:@limsombunchai2004]
+   - In this paper the authors argue for the usage of NN's in real-estate price prediction despite the hardships of their interpretation, simply due to their predictive power
+   - They are using tabular data only
+ - At the time of this writing we are not aware of any research using a Neural Netowrk trained with floor plan images for rental price predictions
+#+END_NOTES
+
+ - Earliest example we could find of research being done using NN's for rent price prediction is from 2004 [cite:@limsombunchai2004]
+ - [cite/text/c:@hattori2019rent]  use Principal Component Analysis to extract feature vectors of floorplan data
+#+begin_quote
+[H]owever, the differences are not significant and it is difficult to find merits to use FPIs for rent prediction model. - [cite/text/cf:@hattori2019rent]
+#+end_quote
+ - [cite/text/cf:@zeng2019deep] use Computer Vision techniques for floorplans, to try detect the functionalities of the rooms
+ - We have also found research using Computer Vision techniques for price estimation using photos of the interior and exteriors [cite:@poursaeed2018]
+* Methodology
+** Data
+#+BEGIN_NOTES
+ - Snapshot of tabular and image data of real estate properties (2021 December)
+ - Scraped from a real estate website
+ - 140,000 observations, 3 categorical and 7 continuous features
+ - Only include properties from the Tokyo Metropolitan area
+    - Limit observations to Tokyo Metropolitan area to avoid having to deal with multiple markets
+#+END_NOTES
+ - Initial data set was scraped from a real estate website
+ - Snapshot of tabular and image data of real estate properties
+ - 140,000 observations, 3 categorical and 7 continuous features
+ - Only include properties from the Tokyo Metropolitan area
+ - Limit observations to this area to avoid having to deal with multiple markets
+ - Recently obtained a much larger dataset, but we are still facing some challenges with the larger dataset.
+*** Floorplan example
+#+BEGIN_NOTES
+ - Example of some typical floorplans and their rent
+#+END_NOTES
+
+#+CAPTION: An example of randomly chosen floorplans and the log of their rent prices. (rent price denoted in 10000 Yen units.)
+[[./assets/rand_imgs.png]]
+
+*** Tabular data
+#+BEGIN_NOTES
+  - 3 categorical variables
+  - 7 continuous variables
+#+END_NOTES
+
+#+NAME: tab:var_explanation
+#+ATTR_LATEX: :name tab:var_explanation :label tab:var_explanation
+|--------------------+-----------------------------------------------------------------|
+| Variable           | Explanation                                                     |
+|--------------------+-----------------------------------------------------------------|
+| apt_rent           | Rent per month of the listing. In units of 10000 Yen            |
+|--------------------+-----------------------------------------------------------------|
+|--------------------+-----------------------------------------------------------------|
+| Apt. Floor         | The floor the property is on                                    |
+| Size in \(m^{2}\)  | Size of property in $m^2$                                       |
+| No Floors bldg     | No of floors of the building                                    |
+| Age bldg.          | No. of years ago the property was built                         |
+| Style              | Description of the layout type of the apartment (1K, 1LDK,... ) |
+| Admin fee  10,000¥ | Amount of monthly administration fee                            |
+| Station            | Name of the closest public transport station                    |
+| Method             | How "Time to station" is measured (foot, bus, or car)           |
+| Time to station    | No. minutes of taking "method" to the next station              |
+|--------------------+-----------------------------------------------------------------|
+
+** Neural Network
+#+BEGIN_NOTES
+Main talking points:
+ - Currently, using a Resnet50
+ - not state of the art, but its a relatively well researched model, that anyone can implement
+   - We used a pretrained model
+   - We freeze the pretrained layers, and only train the last layers for a few epochs
+    - Afterwards we unfreeze the pretrained layers and train the whole model for a few more epochs
+   - We used a sigmoid layer to scale the output of the NN to a predetermined range ( this is important for convergence )
+#+END_NOTES
+
+ - First we used a ~Resnet50~ architecture [cite:@he15:deep_resid_learn_image_recog]
+ - Weights were initialized to pretrained weights available from ~torchvision~ [cite:@NEURIPS2019_9015]
+ - Randomly initialized fully connected layers at the end of the usual ~Resnet50~ model
+ - added a sigmoid "layer" to scale the outputs of the last layer into a predetermined range
+
+*** Training
+#+BEGIN_NOTES
+ - The reason the sigmoid layer is important is because of exploding gradients
+ - In training the NN, we use the MSE loss function, which is the sum of the squared errors
+ - Sometimes the NN will output a very high value, which will lead to a very high error
+   - This will lead to a very high gradient, which will lead to a very large update to the weights
+   - This will lead to the NN not converging
+   - The sigmoid layer scales the output of the NN to a predetermined range, which prevents this from happening
+ - The predetermined range is a very rough range  range of the rent prices in the dataset
+#+END_NOTES
+ - When training the Neural network we split the data into a train and test set.
+ - The above splits were performed on the building level (as opposed to the apartment level)
+ - This was done to make sure that the NN doesn't simply remember the style of floorplans of certain buildings
+ - We fine-tuned the model as follows:
+   - First we froze pretrained layers, trained for a 5 epochs (~1h per epoch)
+   - Afterwards, unfroze them and trained the whole model for 10 epochs (~1h:30 per epoch)
+ - The sigmoid layer was essential for the convergence of the model
+
+** Augmentations
+#+BEGIN_NOTES
+ - Depending on the model used, it is necessary to make all images the same size
+ - There are different methods to do this, and the most popular ones are shown in this picture
+ - The first two rows show the most popular methods
+ - Recently the third method has also become more popular.
+#+END_NOTES
+
+#+ATTR_LATEX:
+#+CAPTION: This figure showcases the properties of each resizing method. The first and second rows compare nine floorplans. The third shows different crops of the leftmost floorplan.
+#+ATTR_HTML: :width 600px
+[[./assets/resizes.jpg]]
+** Preprocessing of Images
+#+BEGIN_NOTES
+ - We chose 224x224 because many image models use this size, we found that using bigger pictures gave better results
+ - Cropping out of the image is done randomly as a augmentation technique
+ - Image rotations were done at 90, 180, 270, 0 degree angles
+ - We did not mirror the floorplans on purpose, as that would change the floorplans fundamentally ( Doors open the wrong ways, the compass shows the wrong direction )
+#+END_NOTES
+ - Normalization of images with normalization statistics of pretrained model
+ - 2 augmentations
+   - Randomly rotating the images
+   - randomly cropping out a 224x224 square of the image
+   - We did not mirror the floorplans on purpose, as that would change the floorplans fundamentally
+* Results
+** Quantitative
+*** Models
+#+BEGIN_NOTES
+ - Three regression models
+   - Model 1: Regular Multiple Linear Regression using the tabular data
+   - Model 2: Multiple Linear Regression using the tabular data and the output of the NN
+   - Model 3: Neural Network only
+ - We can see that the model using the NN factor outperforms the other two models on the train dataset
+ - Note that we hid the categorical variables, because there is just so many of them
+ -
+#+END_NOTES
+
+#+ATTR_HTML: :height 400px
+#+CAPTION: Regression table of the 3 estimated models.
+[[./assets/model_table.jpg]]
+
+*** Performance
+#+BEGIN_NOTES
+ - Moving on to the performance of the models on the test dataset
+ - The rsquared on the test dataset improved by quite a margin.
+#+END_NOTES
+
+#+NAME: tab:regression
+#+LABEL: tab:regression
+#+CAPTION: \( R^2 \) and sample size for the three models obtained on different parts of the dataset.
+#+ATTR_LATEX: :label tab:regression :name tab:regression
+|--------------------------------------+---------+---------+---------|
+|                                      |   total |   train | test    |
+|--------------------------------------+---------+---------+---------|
+| Model 1:  \( R^{2} \) MLR Without NN |   0.915 |   0.915 | *0.914* |
+| Model 2: \( R^{2} \) MLR With NN     |   0.945 |   0.951 | *0.923* |
+| Model 3: \( R^{2} \) LR NN only      |   0.897 |   0.917 | 0.817   |
+| N                                    | 141,394 | 113,116 | 28,278  |
+|--------------------------------------+---------+---------+---------|
+ - We can see an improvement on the total dataset  \( R^2: 0.915 \rightarrow 0.945 \)
+ - test data improvement is smaller \( R^2: 0.914 \rightarrow 0.923 \)
+
+*** Performance
+#+BEGIN_NOTES
+ - In fact the prediction error on the test dataset was reduced by 26%
+ - 438,130,000−321,310,000=116,820,000
+ - over a 100M Yen improvement in prediction per month
+#+END_NOTES
+
+#+NAME: tab:error_reduction
+#+LABEL: tab:error_reduction
+#+CAPTION: Reduction of error in predictions on test set. \( (N=28,278) \)
+#+ATTR_LATEX: :label tab:regression :name tab:regression
+| Model              | Total Error (10,000 Yen) | MAE (10,000 Yen) |
+|--------------------+--------------------------+------------------|
+| Model 1 (Baseline) |                    43813 |           1.5493 |
+| Model 2 (w/ NN)    |                    32131 |           1.1362 |
+
+Reduction of error of \( \approx 26\% \).
+ - \( 438,130,000 - 321,310,000  = 116,820,000 \)
+ - \( 116,820,000 \) Yen improvement in prediction
+** Qualitative
+*** Randomly Extracted sample
+#+BEGIN_NOTES
+ - Randomly extracted sample
+ - Floorplan; left above is the prediction, right above is the true value
+ - This doesn't tell us too much, so lets look at some more extreme predictions
+ - First we will look the lowest predictions of the model
+#+END_NOTES
+
+#+CAPTION: NN predictions and ground truths for a randomly extracted sample of the dataset. (in 10,000¥)
+[[./assets/random_table.png]]
+
+*** Lowest predictions of the neural net
+#+BEGIN_NOTES
+ - All of the lowest predictions are dormitories or shared houses
+ - The model probably picked up on the fact that these floorplans have a repetitive nature
+ - This is likely why the model predicts a low rent for these types of apartments
+#+END_NOTES
+
+#+CAPTION: The four predictions the model predicted the lowest rent for. (in 10,000¥)
+[[./assets/rand_neg_top_100.png]]
+
+*** Highest predictions of the neural net
+#+BEGIN_NOTES
+ - Highest predictions of the neural net
+ - These floorplans are all very large
+   - Have multiple floors to them
+   - Have multiple bedrooms
+   - Have quite intricate layouts
+ - The magnitude error is quite high. It is not overpredicting slightly, but by a large margin
+#+END_NOTES
+
+#+CAPTION: The floorplans of four apartments with very highest predicted rents. (in 10,000¥)
+[[./assets/rand_top_100.png]]
+
+*** Plot of residuals
+#+BEGIN_NOTES
+ - Residual plot
+ - Blue dotted line is drawn at the 100 万円 mark
+ - Left is of model with NN
+ - Middle is just the NN
+ - Right is the regression including NN
+ - We can see that overall the predictions become better
+ - Left model has a lot of very high predictions
+ - NN doesn't have those kinds of predictions, but has a lot of mistakes for the lower rent apartments
+ - Right model kind accounts for the weaknesses of the two other models and nicely balances them out
+#+END_NOTES
+
+#+ATTR_HTML:
+#+CAPTION: The floorplans of four apartments with very highest predicted rents. (in 10,000¥)
+[[./assets/residual_plot.png]]
+
+* Limitations and plans
+#+BEGIN_NOTES
+#+END_NOTES
+* Bibliography
+:PROPERTIES:
+:CUSTOM_ID: bibliography
+:END:
+#+CITE_EXPORT: csl chicago-author-date-without-url.csl
+#+print_bibliography:
+
+* Appendix
+** Largest decreases in Regression prediction after including NN output
+#+CAPTION: Floorplans of apartments with the biggest decreases in predicted rent due to NN output (in 10,000¥)
+[[./assets/overpreds.png]]
+
+** Largest increases
+#+CAPTION: Floorplans of apartments with the biggest increases in predicted rent due to NN output (in 10,000¥)
+[[./assets/underpreds.png]]
