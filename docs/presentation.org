@@ -36,7 +36,7 @@
 #+ATTR_HTML: :height 200px
 [[file:assets/scaling_laws_improvement.jpg]]
 
-Taken from [cite:@kaplanScalingLawsNeural2020]
+Taken from [cite/text:@kaplanScalingLawsNeural2020]
 
 * Proposal of idea
 :PROPERTIES:
@@ -192,7 +192,7 @@ Use the ISOFlop approach (Approach 2 from [cite:@hoffmannTrainingComputeOptimalL
 #+ATTR_HTML: :center :height 460px
 [[file:assets/transformer_arch.jpg]]
 
-Figure taken from [cite:@vaswani17_atten_is_all_you_need]
+Figure taken from [cite/text:@vaswani17_atten_is_all_you_need]
 
 *** Isoflop Curve
 #+BEGIN_NOTES
@@ -203,7 +203,7 @@ Figure taken from [cite:@vaswani17_atten_is_all_you_need]
 :ID:       43c3d472-8232-4a30-b041-eb5ec8d62344
 :END:
 [[file:assets/isoflop.jpg]]
-Figure taken from Deepseek
+Figure taken from [cite/text:@deepseek-aiDeepSeekLLMScaling2024]
 
 * Method of evaluation
 :PROPERTIES:
