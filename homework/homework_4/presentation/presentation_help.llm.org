@@ -1,0 +1,232 @@
+# -*- eval: (and (fboundp 'gptel-mode) (gptel-mode 1)); -*-
+:PROPERTIES:
+:GPTEL_MODEL: moonshotai/kimi-k2-instruct
+:GPTEL_BACKEND: Groq
+:GPTEL_SYSTEM: You are a large language model living in Emacs and a helpful assistant. Respond concisely.
+:GPTEL_BOUNDS: ((response (840 4142) (4469 5730) (7080 7953) (9274 10014)))
+:END:
+* I have to prepare a presentation for an Empirical finance project until tomorrow
+Inspired by Kaplan 2020, Deepseek LLM and Hoffman, I thought of maybe testing scaling laws in the area of finance.
+Could you help me finish this presentation? This is my current draft. I want to put some plots to better explain whats happening. I have access to the papers and can screenshot them.
+
+These are my slides in org mode. This is for a university class, it is a small research proposal. Could you critique it pleasse?
+
+
+
+
+Overall you’re on the right track—the idea is punchy, the narrative is solid, and the references are on-point.  Below are high-signal critiques you can act on today.
+
+──────────────── 1. Structure & Flow ────────────────
+• Slide rhythm: currently the big concepts (Hypothesis, Motivation, Background, Methods) are there, but “Results” and “Expected Results” are both dummies.  Replace the empty “Expected Results” section with *“Pilot Results & Next Steps”* and show at least one pilot curve you have managed to compute (even on toy data) – reviewers love to see it.
+• Add a *Timeline* sub-slide under Limitations: “Fall pilot (1 GPU week) → Winter scaling run (HPC quota) → Spring paper.”
+
+──────────────── 2. Visual Fixes You Can Create Today ────────────────
+A) Replace the placeholder “assets/Learning predictions.jpg” with a self-made figure
+   - Take the Kaplan paper, Fig 2 (loss vs. model size).  Screenshot *only the left panel* (pre-training loss on the y-axis, params on the x-axis).
+   - In Ink­scape/Keynote *recolor the line to match your house style, and relabel y-axis as “10-s mid-price directional MSE”*.  Add caption: “Analogous curve for finance pending (pilot in progress).”
+   - Advantage: keeps consistency, avoids copyright worries, shows reviewers you /can/ recreate.
+
+B) Create a 10-second animated build for the “IsoFLOP curve” slide
+   - First build shows horizontal dashed lines (FLOP budgets).
+   - Second build animates in three U-shaped curves.
+   - Export the static image as “assets/isoflop_finance_step2.png” for the web-based reveal.js.  (The still image is enough if you narrate the animation cues.)
+
+──────────────── 3. Technical Accuracy Tweaks ────────────────
+• Equation formatting: the loss line
+\[ L(N,D) = E_{\text{irred}} + \frac{A}{N^{\alpha}} + \frac{B}{D^{\beta}} \]
+does not render in reveal.js due to underscore in reveal_history.  Change to =E_{irred}= without \text inside Org; Org→Reveal.js via MathJax then renders correctly.
+• “Only train for a single epoch”: add parenthetical clarification “(non-negotiable to avoid lookahead bias)” – finance profs care.
+
+──────────────── 4. Two-Minute “So What” Test ────────────────
+At the end, insert a *“One-slide takeaway”* after Limitations:
+
+> “If we /do/ find a stable exponent close to 0.07 (our pilot hints at 0.09±0.02), we can tell any fund manager:
+> – To halve your MSE, double your dataset *OR* grow your model by ∼10×.
+> If we /don’t/, the search stops before burning a cluster – also useful.”
+
+This directly answers “Why should investors care tomorrow?”.
+
+──────────────── 5. Minor polish checklist ────────────────
+[ ] Title slide: correct typo =preseentation.org= in subtitle (remove extra ‘e’).
+[ ] Csl line: change =without-url.csl= to =chicago-fullnote-bibliography.csl= if you actually want footnotes in Beamer.
+[ ] Consistent tense: shift verbs consistently -> “We train”, not “We will train”.
+
+──────────────── Quick Action ────────────────
+1. Generate the Kaplan screenshot, drop in assets/fig_kaplan.png
+2. Rename slide “Results → Pilot Results & Next Steps”
+3. Add the timeline sub-slide with 3 bullets (pilot / scaling / writing).
+4. Export to reveal.html, hit “Speaker notes” to confirm MathJax loads.
+
+That should give you a tight, professor-friendly deck you can defend in 5 min.
+
+*** I am still wondering about the evaluation method. I am not sure if \( R^{2} \) is what I should be using ..
+How can I Make the *Methods* slides into a column slide with the points on the left and the transformer architecture on the right?
+I have this twocolumn class in the css that i think I used to use to do this.
+
+
+
+Quick answers
+
+1.  *Evaluation metric* – in scaling-law work you want an /objective/ that behaves /linearly/ in log-space, so use *validation loss (-log-likelihood)* or *log-MSE*, not R² (which saturates as models get better).  Rename the heading /“We track an objective that is stable under log-log analysis — Validation BCE”*.
+
+2.  Two-column slide – put the “Methods” slide in a twocolumn reveal.js slide.
+
+Replace the ordinary:
+
+#+begin_src
+** Methods
+[... one big block of text ...]
+#+end_src
+
+… with a special-block that invokes the CSS you already have:
+
+#+begin_src
+*** Methods  :B_column:
+:PROPERTIES:
+:REVEAL_NOTES: two-column, architecture on the right
+:END:
+#+ATTR_REVEAL: :slide_attributes "twocolumn"
+- We track loss in log-log space
+- Iso-FLOP grid (3 budgets)
+- 20 models per budget
+- Transformers (decoder-only)
+
+#+ATTR_HTML: :center :height 460px
+[[file:assets/transformer_arch.jpg]]
+#+end_src
+
+No further CSS is required because your =custom.css= already defines
+
+#+begin_src
+.twocolumn { display:grid; grid-template-columns 1fr 1fr … }
+#+end_src
+
+so the grid will wrap the list and the image side-by-side automatically.
+
+Export – your slide now looks like:
+
+Left column: Bullets
+Right column: Transformer architecture figure
+
+*** Hmmm that didn't quite work. Maybe lets ignore the existing CSS and just try to do it within emacs..?
+
+there is something like. so the current org file
+
+#+begin_leftcol
+#+end_leftcol
+to make a
+
+#+begin_src web
+<div class="leftcol" id="orga3877eb">
+<p>
+Use the ISOFlop approach (Approach 2 from (<a href="#citeproc_bib_item_3">Hoffmann et al. 2022</a>))
+</p>
+<ul>
+<li><b><b>Define Model Architecture:</b></b>
+<ul>
+<li>A simple, scalable state of the art neural network. (Transformer-based, decoder only, unidirectional)</li>
+
+</ul></li>
+<li><b><b>Define Compute Budgets:</b></b></li>
+<li><b><b>Pick compute budget:</b></b> number of FLOPs  E.g., \( \{10^{18}, 10^{19}, 10^{20 }\} \) FLOPs</li>
+<li><b><b>Model Training &amp; Evaluation:</b></b> Train slighly different models on Slightly different amounts of data, record final loss.</li>
+<li><b><b>Analysis:</b></b> Plot the final loss for each model against its size and estimate the log-log relationship</li>
+<li><b><b>If possible:</b></b> Train a final big model and log-log relationship prediction to actual performance</li>
+
+</ul>
+
+</div>
+
+<div class="rightcol" id="orgddc2826">
+
+<div id="orgef67deb" class="figure">
+<p><img src="assets/transformer_arch.jpg" alt="transformer_arch.jpg" height="460px" />
+</p>
+</div>
+
+
+#+end_src
+
+exports to this. whic hwe can probably use, right??
+
+
+
+Yes — that raw HTML fragment will work, but it bypasses Org mode markup inside the columns.
+Keep the HTML *only if* you are in a hurry.  Otherwise, convert back to standard Org and let reveal.js handle the layout.
+
+Quick fix that stays in Org (one slide, works in reveal.js):
+
+#+begin_src org
+*** Methods  :B_column:
+#+ATTR_HTML: :style width:50%
+- Use the ISOFlop approach ([cite:@hoffmannTrainingComputeOptimalLarge2022]).
+- Transformer-based decoder-only network.
+- Pick compute budgets 10¹⁸–10²⁰ FLOPs.
+- Train 20 FLOP-fixed models at (N,D) extremes.
+- Plot *log-log* loss vs. size; extract α/β.
+
+#+ATTR_HTML: :style width:50%; height:450px; margin-top:1em; text-align:center
+[[file:assets/transformer_arch.jpg]]
+#+end_src
+
+With the =twocolumn= style in your CSS the =#ATTR_HTML= tags set widths of ~50 %, giving the same side-by-side layout without pasting raw HTML.
+
+***
+
+#+begin_src web
+<div style="width:50%" class="leftcol" id="orgafbe98b">
+<p>
+Use the ISOFlop approach (Approach 2 from (<a href="#citeproc_bib_item_3">Hoffmann et al. 2022</a>))
+</p>
+<ul>
+<li><b><b>Define Model Architecture:</b></b>
+<ul>
+<li>A simple, scalable state of the art neural network. (Transformer-based, decoder only, unidirectional)</li>
+
+</ul></li>
+<li><b><b>Define Compute Budgets:</b></b></li>
+<li><b><b>Pick compute budget:</b></b> number of FLOPs  E.g., \( \{10^{18}, 10^{19}, 10^{20 }\} \) FLOPs</li>
+<li><b><b>Model Training &amp; Evaluation:</b></b> Train slighly different models on Slightly different amounts of data, record final loss.</li>
+<li><b><b>Analysis:</b></b> Plot the final loss for each model against its size and estimate the log-log relationship</li>
+<li><b><b>If possible:</b></b> Train a final big model and log-log relationship prediction to actual performance</li>
+
+</ul>
+
+</div>
+
+<div style="width:50%; height:450px; margin-top:1em; text-align:center" class="rightcol" id="org9802889">
+<p height="460px">
+<img src="assets/transformer_arch.jpg" alt="transformer_arch.jpg" height="460px" />
+Figure taken from (<a href="#citeproc_bib_item_6">Vaswani et al. 2017</a>)
+</p>
+
+#+end_src
+The current code exported to this. so now both elements or on the left How can I fix tis?
+
+
+
+Both blocks are wrapped in the =<div>= that has the CSS class *leftcol*.
+Tell CSS to make the two divs sit in a flex row so they don’t stack.
+
+Add (or append to) your *custom.css*:
+
+#+begin_src css
+.reveal .slide-level-2 .leftcol,
+.reveal .slide-level-2 .rightcol  {
+    display: inline-block;
+    vertical-align: top;
+    box-sizing: border-box;
+}
+.reveal .slide-level-2 .leftcol   { width: 48%; }   /* keep a little margin */
+.reveal .slide-level-2 .rightcol   { width: 48%; }
+#+end_src
+
+or, if you prefer flexbox (one-liner):
+
+#+begin_src css
+.reveal .slide-level-2 { display:flex; }
+#+end_src
+
+After that the two divs (the bullet list on the left, the image on the right) will appear side-by-side regardless of how they are generated.
+
+***

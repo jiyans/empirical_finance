@@ -2,10 +2,11 @@
 #+SUBTITLE: Finding Scaling Laws in Financial data
 #+Bibliography: local-bib.bib
 #+BEAMER_FRAME_LEVEL: 2
-#+OPTIONS: H:4 toc:1 num:nil
+#+OPTIONS: H:4 toc:2 num:nil
 #+EMAIL: jiyan.schneider@keio.jp
 #+AUTHOR: Jiyan Schneider
 #+OPTIONS: reveal_history:t reveal_fragmentinurl:t
+#+OPTIONS: reveal_hash:nil
 
 :REVEAL_PROPERTIES:
 #+REVEAL_TITLE_SLIDE: <h1>%t</h1><br><h2>%s</h2><br><h4>%a</h4><br>Keio University, Graduate school of Economics
@@ -15,266 +16,218 @@
 #+REVEAL_TRANS: linear
 #+REVEAL_HLEVEL: 1
 :END:
+
 * Introduction
+:PROPERTIES:
+:CUSTOM_ID: introduction
+:ID:       aef04778-f1c7-4525-93e7-623cb2b98d56
+:END:
 #+BEGIN_NOTES
+- Introduction
+  – “AI progress became predictable once we knew the scaling law.”
+  – Ask yourself: could finance become predictable the same way?
 #+END_NOTES
-*** Price structure of real estate
+  - Recent breakthroughs in AI, particularly Large Language Models (LLMs), have been driven by the "scaling hypothesis."
+  - **Scaling Hypothesis:** Performance of a model predictably improves as we increase resources (model size, data, compute).
+  - This relationship often follows a smooth power law, making progress measurable and forecastable.
+  - **Research Question:** Can similar scaling laws be identified in the domain of quantitative finance?
+
+#+ATTR_HTML: :height 200px
+[[file:assets/scaling_laws_improvement.jpg]]
+
+Taken from [cite:@kaplanScalingLawsNeural2020]
+
+* Proposal of idea
+:PROPERTIES:
+:CUSTOM_ID: Proposal of idea
+:END:
 #+BEGIN_NOTES
+  – We systematically hunt for a power-law L(N,D) in the 10-second mid-price prediction task.
+  – If it exists, it answers the ROI question forever.
+
+#+END_NOTES
+  - This research proposes to systematically investigate the existence of scaling laws in financial forecasting.
+  - We test the hypothesis that a financial model's performance (e.g., predictive accuracy) scales as a power-law with:
+    1. **Model Size (N):** The number of parameters in the model.
+    2. **Data Size (D):** The volume of historical data used for training.
+  - The goal is to fit an empirical formula, similar to those found in LLMs:
+    \[ L(N, D) \approx E_{\text{irred}} + \frac{A}{N^\alpha} + \frac{B}{D^\beta} \]
+    where L is the prediction loss.
+**** Results
+:PROPERTIES:
+:CUSTOM_ID: results_expected
+:ID:       8aec029f-348d-45b8-8b5f-3466658ea20a
+:END:
+#+BEGIN_NOTES
+ - This slide shows what the output of our resarch would be
+ - This is from Hoffman paper for scaling laws of LLMs. Since this is just a proposal, I will put it here, explain it
+ - so that you could understand what we would get.
 #+END_NOTES
 
-#+begin_export html
-<br>
-<br>
-<br>
-#+end_export
-| Structural                    | Environmental               |
-|-------------------------------+-----------------------------|
-| Apartment size                | Name of Closest station     |
-| Floor of apartment            | No. of supermarkets         |
-| Material used in construction | Distance to the city center |
-| Floor layout                  | No. of schools              |
-| Kitchen Space                 | No. of Parks                |
-| Interior design and finish    |                             |
-#+begin_export html
-<br>
-#+end_export
-*** Machine Learning in real estate
+[[file:assets/Learning predictions.jpg]]
+Figure taken from [cite:@hoffmannTrainingComputeOptimalLarge2022]
+* Motivation
+:PROPERTIES:
+:CUSTOM_ID: motivation
+:ID:       2bc86fef-6214-4ecd-8a9f-99b4c5756e2c
+:END:
 #+BEGIN_NOTES
-Moving on to past research about machine learning in real estate
- - [cite:@hattori2019rent] use PCA to extract feature vectors from floorplans
-   - They use it in various models
-   - While they note slight improvements, they say that it is challenging to find merits for their improvements, because they are too small
- - [cite:@limsombunchai2004]
-   - In this paper the authors argue for the usage of NN's in real-estate price prediction despite the hardships of their interpretation, simply due to their predictive power
-   - They are using tabular data only
- - At the time of this writing we are not aware of any research using a Neural Netowrk trained with floor plan images for rental price predictions
+ – This lens already guided $100 M decisions at OpenAI, Google, DeepSeek.
+ – The same tool can tell us when to buy Compute vs. do data acquisition
+ - We could answer questions like, How much data do we need to achieve our goals?
+ - Do we need more compute given our data?
+ - Is what we want to do even realistically achievable with our data / all available data on the planet
+ - Lastly, its also feasible
 #+END_NOTES
+  - **Practical:** If scaling laws hold, we can optimize resource allocation.
+    - Avoids costly trial-and-error in model development.
+    - Allows us to forecast the "return on investment" for acquiring more data or training larger models.
+    - Informs optimal model design, analogous to how Hoffmann et al. (2022) found smaller models trained on more data were optimal.
+  - **Theoretical:**
+    - Provides a new framework for understanding the limits of predictability in financial markets.
+    - The "irreducible error" term ($E_{irred}$) in the scaling law could be interpreted as a measure of fundamental market efficiency or noise.
+  - **Feasible:**
+    - Scaling laws seem to hold even on quite small scales so you don't need a 1024 H100 machines.
+* Background
+:PROPERTIES:
+:CUSTOM_ID: background
+:END:
 
- - Earliest example we could find of research being done using NN's for rent price prediction is from 2004 [cite:@limsombunchai2004]
- - [cite/text/c:@hattori2019rent]  use Principal Component Analysis to extract feature vectors of floorplan data
-#+begin_quote
-[H]owever, the differences are not significant and it is difficult to find merits to use FPIs for rent prediction model. - [cite/text/cf:@hattori2019rent]
-#+end_quote
- - [cite/text/cf:@zeng2019deep] use Computer Vision techniques for floorplans, to try detect the functionalities of the rooms
- - We have also found research using Computer Vision techniques for price estimation using photos of the interior and exteriors [cite:@poursaeed2018]
+** Initial Scaling law research
+:PROPERTIES:
+:CUSTOM_ID: initial_scaling_law_research
+:END:
+#+BEGIN_NOTES
+- Background (Kaplan, left)
+  – First empirical evidence that language performance scales smoothly with model / data / compute.
+  – Implied: “train the largest model you can afford.”
+
+- Background (Hoffmann, right) – IsoFLOP revelation
+  – Their famous figure: U-shaped iso-Flops.
+  – Minimum was 4× smaller model + 4× more data → the cheaper, stronger “Chinchilla.”
+  – Our task: find the financial “Chinchilla.”
+#+END_NOTES
+  - **Kaplan et al. (2020), "Scaling Laws for Neural Language Models"** [cite:@kaplanScalingLawsNeural2020]
+    - First to comprehensively demonstrate that LLM loss scales smoothly as a power-law with model size, dataset size, and training compute.
+    - Their findings suggested that for best performance, model size should be the primary focus of scaling efforts.
+  - **Hoffmann et al. (2022), "Training Compute-Optimal Large Language Models"** [cite:@hoffmannTrainingComputeOptimalLarge2022]
+    - Refined Kaplan's work. By their analysis, for optimal performance under a fixed compute budget, model size and dataset size should be scaled in roughly equal proportion.
+    - Their model, "Chinchilla," though much smaller than competitors like Gopher (or GPT-3), outperformed them by being trained on significantly more data.
+  - We want to apply the methodologies of these papers to a financial context
+** Current research
+:PROPERTIES:
+:CUSTOM_ID: current-research
+:END:
+#+BEGIN_NOTES
+ - Currently scaling law research is done for new architectures / types of data
+This isn't just a theoretical exercise.
+ - Guide massive investments in Large Language Models -> The Kaplan 2020 paper is said to be what inspired OpenAI to try and go for ChatGPT
+ - Hoffman was at google (gemini)
+ - The last author of the Kaplan paper was Amodei (Now at anthropic)
+#+END_NOTES
+   - The "scaling" approach is a proven framework for making progress in complex domains by making it predictable and measurable.
+   - It has been used to:
+     - Guide massive investments in Large Language Models. ([cite:@kaplanScalingLawsNeural2020])
+     - Discover optimal model architectures and data-to-model size ratios [cite:@hoffmannTrainingComputeOptimalLarge2022;@deepseek-aiDeepSeekLLMScaling2024]
+     - Achieve breakthroughs in computer vision. [cite:@zhaiScalingVisionTransformers2022]
+     - The existence of bad scaling laws with audio cause pessism and leads people to pivot into new research directions [cite:@cuervoScalingPropertiesSpeech2024;@maimonScalingAnalysisInterleaved2025]
+
+   - **Our goal is to bring these same benefits to quantitative finance:**
+     - **Practical:** Forecast the ROI of compute/data, optimize resource allocation, and avoid costly trial-and-error.
+     - **Theoretical:** Create a new framework for measuring market predictability and estimating the "irreducible" market noise ($E_{\text{irred}}$).
+
 * Methodology
+:PROPERTIES:
+:CUSTOM_ID: methodology
+:END:
+
 ** Data
+:PROPERTIES:
+:CUSTOM_ID: data
+:END:
 #+BEGIN_NOTES
- - Snapshot of tabular and image data of real estate properties (2021 December)
- - Scraped from a real estate website
- - 140,000 observations, 3 categorical and 7 continuous features
- - Only include properties from the Tokyo Metropolitan area
-    - Limit observations to Tokyo Metropolitan area to avoid having to deal with multiple markets
+  - Considered multiple time horizons, however due to the need for Big data, short time horizons seem better
+  - If we find something on long time horizons, we won't have enough data to scale it infinitely anyways.
+  – S&P 500 TAQ 2010–2023.
+  – Task: predict sign and magnitude of ∆ mid-Price over next 10 s from previous 60 s.
+  – 7 TB compressed = enough samples to actually scale.
 #+END_NOTES
- - Initial data set was scraped from a real estate website
- - Snapshot of tabular and image data of real estate properties
- - 140,000 observations, 3 categorical and 7 continuous features
- - Only include properties from the Tokyo Metropolitan area
- - Limit observations to this area to avoid having to deal with multiple markets
- - Recently obtained a much larger dataset, but we are still facing some challenges with the larger dataset.
-*** Floorplan example
+  - We use high-frequency trade and quote (TAQ) data for a broad set of US equities (e.g., S&P 500 components).
+  - **Period:** 2010-2023, providing a large dataset to sample from.
+  - **Prediction Task:** Predict the sign and magnitude of the mid-price change over the next 10 seconds based on the previous 60 seconds of order book and trade data. This is a simple, well-defined, and computationally tractable task.
+  - Only train for a single Epoch at most
+  - Extensively care that we do not use future data to evaluate our models
+** Methods
+:PROPERTIES:
+:CUSTOM_ID: methods
+:END:
 #+BEGIN_NOTES
- - Example of some typical floorplans and their rent
-#+END_NOTES
-
-#+CAPTION: An example of randomly chosen floorplans and the log of their rent prices. (rent price denoted in 10000 Yen units.)
-[[./assets/rand_imgs.png]]
-
-*** Tabular data
-#+BEGIN_NOTES
-  - 3 categorical variables
-  - 7 continuous variables
-#+END_NOTES
-
-#+NAME: tab:var_explanation
-#+ATTR_LATEX: :name tab:var_explanation :label tab:var_explanation
-|--------------------+-----------------------------------------------------------------|
-| Variable           | Explanation                                                     |
-|--------------------+-----------------------------------------------------------------|
-| apt_rent           | Rent per month of the listing. In units of 10000 Yen            |
-|--------------------+-----------------------------------------------------------------|
-|--------------------+-----------------------------------------------------------------|
-| Apt. Floor         | The floor the property is on                                    |
-| Size in \(m^{2}\)  | Size of property in $m^2$                                       |
-| No Floors bldg     | No of floors of the building                                    |
-| Age bldg.          | No. of years ago the property was built                         |
-| Style              | Description of the layout type of the apartment (1K, 1LDK,... ) |
-| Admin fee  10,000¥ | Amount of monthly administration fee                            |
-| Station            | Name of the closest public transport station                    |
-| Method             | How "Time to station" is measured (foot, bus, or car)           |
-| Time to station    | No. minutes of taking "method" to the next station              |
-|--------------------+-----------------------------------------------------------------|
-
-** Neural Network
-#+BEGIN_NOTES
-Main talking points:
- - Currently, using a Resnet50
- - not state of the art, but its a relatively well researched model, that anyone can implement
-   - We used a pretrained model
-   - We freeze the pretrained layers, and only train the last layers for a few epochs
-    - Afterwards we unfreeze the pretrained layers and train the whole model for a few more epochs
-   - We used a sigmoid layer to scale the output of the NN to a predetermined range ( this is important for convergence )
+- IsoFLOP design – one curve per slide
+  1. Pick total FLOP budget   → horizontal dashed line in slide.
+  2. Train 20 models at the same FLOP but different (N,D) splits.
+  3. Plot Loss vs. N to get the U-shape.
+  4. Repeat for three budgets = three U-curves.
+  5. The bottom points trace N_opt(D_opt) → ratio of α/β.
 #+END_NOTES
 
- - First we used a ~Resnet50~ architecture [cite:@he15:deep_resid_learn_image_recog]
- - Weights were initialized to pretrained weights available from ~torchvision~ [cite:@NEURIPS2019_9015]
- - Randomly initialized fully connected layers at the end of the usual ~Resnet50~ model
- - added a sigmoid "layer" to scale the outputs of the last layer into a predetermined range
+#+begin_leftcol
+Use the ISOFlop approach (Approach 2 from [cite:@hoffmannTrainingComputeOptimalLarge2022])
+   - **Define Model Architecture:**
+     - A simple, scalable state of the art neural network. (Transformer-based, decoder only, unidirectional)
+   - **Define Compute Budgets:**
+   - **Pick compute budget:** number of FLOPs  E.g., \( \{10^{18}, 10^{19}, 10^{20 }\} \) FLOPs
+   - **Model Training & Evaluation:** Train slighly different models on Slightly different amounts of data, record final loss.
+   - **Analysis:** Plot the final loss for each model against its size and estimate the log-log relationship
+   - **If possible:** Train a final big model and log-log relationship prediction to actual performance
+#+end_leftcol
 
-*** Training
+*** Transformer mdoel
 #+BEGIN_NOTES
- - The reason the sigmoid layer is important is because of exploding gradients
- - In training the NN, we use the MSE loss function, which is the sum of the squared errors
- - Sometimes the NN will output a very high value, which will lead to a very high error
-   - This will lead to a very high gradient, which will lead to a very large update to the weights
-   - This will lead to the NN not converging
-   - The sigmoid layer scales the output of the NN to a predetermined range, which prevents this from happening
- - The predetermined range is a very rough range  range of the rent prices in the dataset
-#+END_NOTES
- - When training the Neural network we split the data into a train and test set.
- - The above splits were performed on the building level (as opposed to the apartment level)
- - This was done to make sure that the NN doesn't simply remember the style of floorplans of certain buildings
- - We fine-tuned the model as follows:
-   - First we froze pretrained layers, trained for a 5 epochs (~1h per epoch)
-   - Afterwards, unfroze them and trained the whole model for 10 epochs (~1h:30 per epoch)
- - The sigmoid layer was essential for the convergence of the model
-
-** Augmentations
-#+BEGIN_NOTES
- - Depending on the model used, it is necessary to make all images the same size
- - There are different methods to do this, and the most popular ones are shown in this picture
- - The first two rows show the most popular methods
- - Recently the third method has also become more popular.
+- Studied a lot
+- In finance as well
+- Felt low risk
+- Easily can adapt width and height parameters
 #+END_NOTES
 
-#+ATTR_LATEX:
-#+CAPTION: This figure showcases the properties of each resizing method. The first and second rows compare nine floorplans. The third shows different crops of the leftmost floorplan.
-#+ATTR_HTML: :width 600px
-[[./assets/resizes.jpg]]
-** Preprocessing of Images
+#+ATTR_HTML: :center :height 460px
+[[file:assets/transformer_arch.jpg]]
+
+Figure taken from [cite:@vaswani17_atten_is_all_you_need]
+
+*** Isoflop Curve
 #+BEGIN_NOTES
- - We chose 224x224 because many image models use this size, we found that using bigger pictures gave better results
- - Cropping out of the image is done randomly as a augmentation technique
- - Image rotations were done at 90, 180, 270, 0 degree angles
- - We did not mirror the floorplans on purpose, as that would change the floorplans fundamentally ( Doors open the wrong ways, the compass shows the wrong direction )
-#+END_NOTES
- - Normalization of images with normalization statistics of pretrained model
- - 2 augmentations
-   - Randomly rotating the images
-   - randomly cropping out a 224x224 square of the image
-   - We did not mirror the floorplans on purpose, as that would change the floorplans fundamentally
-* Results
-** Quantitative
-*** Models
-#+BEGIN_NOTES
- - Three regression models
-   - Model 1: Regular Multiple Linear Regression using the tabular data
-   - Model 2: Multiple Linear Regression using the tabular data and the output of the NN
-   - Model 3: Neural Network only
- - We can see that the model using the NN factor outperforms the other two models on the train dataset
- - Note that we hid the categorical variables, because there is just so many of them
- -
+ - After the experiment is done I want to plot the isocurves like this.
 #+END_NOTES
 
-#+ATTR_HTML: :height 400px
-#+CAPTION: Regression table of the 3 estimated models.
-[[./assets/model_table.jpg]]
+:PROPERTIES:
+:ID:       43c3d472-8232-4a30-b041-eb5ec8d62344
+:END:
+[[file:assets/isoflop.jpg]]
+Figure taken from Hoffman
 
-*** Performance
-#+BEGIN_NOTES
- - Moving on to the performance of the models on the test dataset
- - The rsquared on the test dataset improved by quite a margin.
-#+END_NOTES
-
-#+NAME: tab:regression
-#+LABEL: tab:regression
-#+CAPTION: \( R^2 \) and sample size for the three models obtained on different parts of the dataset.
-#+ATTR_LATEX: :label tab:regression :name tab:regression
-|--------------------------------------+---------+---------+---------|
-|                                      |   total |   train | test    |
-|--------------------------------------+---------+---------+---------|
-| Model 1:  \( R^{2} \) MLR Without NN |   0.915 |   0.915 | *0.914* |
-| Model 2: \( R^{2} \) MLR With NN     |   0.945 |   0.951 | *0.923* |
-| Model 3: \( R^{2} \) LR NN only      |   0.897 |   0.917 | 0.817   |
-| N                                    | 141,394 | 113,116 | 28,278  |
-|--------------------------------------+---------+---------+---------|
- - We can see an improvement on the total dataset  \( R^2: 0.915 \rightarrow 0.945 \)
- - test data improvement is smaller \( R^2: 0.914 \rightarrow 0.923 \)
-
-*** Performance
-#+BEGIN_NOTES
- - In fact the prediction error on the test dataset was reduced by 26%
- - 438,130,000−321,310,000=116,820,000
- - over a 100M Yen improvement in prediction per month
-#+END_NOTES
-
-#+NAME: tab:error_reduction
-#+LABEL: tab:error_reduction
-#+CAPTION: Reduction of error in predictions on test set. \( (N=28,278) \)
-#+ATTR_LATEX: :label tab:regression :name tab:regression
-| Model              | Total Error (10,000 Yen) | MAE (10,000 Yen) |
-|--------------------+--------------------------+------------------|
-| Model 1 (Baseline) |                    43813 |           1.5493 |
-| Model 2 (w/ NN)    |                    32131 |           1.1362 |
-
-Reduction of error of \( \approx 26\% \).
- - \( 438,130,000 - 321,310,000  = 116,820,000 \)
- - \( 116,820,000 \) Yen improvement in prediction
-** Qualitative
-*** Randomly Extracted sample
-#+BEGIN_NOTES
- - Randomly extracted sample
- - Floorplan; left above is the prediction, right above is the true value
- - This doesn't tell us too much, so lets look at some more extreme predictions
- - First we will look the lowest predictions of the model
-#+END_NOTES
-
-#+CAPTION: NN predictions and ground truths for a randomly extracted sample of the dataset. (in 10,000¥)
-[[./assets/random_table.png]]
-
-*** Lowest predictions of the neural net
-#+BEGIN_NOTES
- - All of the lowest predictions are dormitories or shared houses
- - The model probably picked up on the fact that these floorplans have a repetitive nature
- - This is likely why the model predicts a low rent for these types of apartments
-#+END_NOTES
-
-#+CAPTION: The four predictions the model predicted the lowest rent for. (in 10,000¥)
-[[./assets/rand_neg_top_100.png]]
-
-*** Highest predictions of the neural net
-#+BEGIN_NOTES
- - Highest predictions of the neural net
- - These floorplans are all very large
-   - Have multiple floors to them
-   - Have multiple bedrooms
-   - Have quite intricate layouts
- - The magnitude error is quite high. It is not overpredicting slightly, but by a large margin
-#+END_NOTES
-
-#+CAPTION: The floorplans of four apartments with very highest predicted rents. (in 10,000¥)
-[[./assets/rand_top_100.png]]
-
-*** Plot of residuals
-#+BEGIN_NOTES
- - Residual plot
- - Blue dotted line is drawn at the 100 万円 mark
- - Left is of model with NN
- - Middle is just the NN
- - Right is the regression including NN
- - We can see that overall the predictions become better
- - Left model has a lot of very high predictions
- - NN doesn't have those kinds of predictions, but has a lot of mistakes for the lower rent apartments
- - Right model kind accounts for the weaknesses of the two other models and nicely balances them out
-#+END_NOTES
-
-#+ATTR_HTML:
-#+CAPTION: The floorplans of four apartments with very highest predicted rents. (in 10,000¥)
-[[./assets/residual_plot.png]]
-
+* Method of evaluation
+:PROPERTIES:
+:CUSTOM_ID: methods-of-evaluatoin
+:END:
+  - /Forecast error/: final cross-entropy vs baseline logit model (y-axis log-transformed).
+  - /Economic value/: out-of-sample Sharpe ratio of a pure signal-driven strategy.
+  - Increasing \( R^{2} \)s in the log-log relationship would validate the scaling hypothesis.
+  - However considering other
+  - We analyze the estimated exponents \( \alpha \) and \( \beta \). These determine the relative importance of model size vs. data size for financial prediction.
+  - As a secondary, economic evaluation, we can construct a simple trading strategy based on the predictions of the best models to gauge their potential profitability (e.g., Sharpe ratio).
 * Limitations and plans
+:PROPERTIES:
+:CUSTOM_ID: limitations
+:END:
 #+BEGIN_NOTES
 #+END_NOTES
+  - **Computational Cost:** Training a large grid of models is resource-intensive.
+    - **Plan:** Start with a smaller-scale pilot study. Utilize university high-performance computing (HPC) resources or cloud credits.
+  - **Evalution Criteria:** Is our current criteria \( R^{2} \) actually amenable for these scaling laws?
+  - **Data Non-stationarity:** Financial markets evolve, which may complicate the scaling relationship.
+  - **Generalizability:** Results might be specific to our chosen task, data, or model architecture.
+    - **Plan:** If time permits, test a secondary task (e.g., volatility prediction) or a different model family (e.g., an LSTM).
+
 * Bibliography
 :PROPERTIES:
 :CUSTOM_ID: bibliography
@@ -282,11 +235,3 @@ Reduction of error of \( \approx 26\% \).
 #+CITE_EXPORT: csl chicago-author-date-without-url.csl
 #+print_bibliography:
 
-* Appendix
-** Largest decreases in Regression prediction after including NN output
-#+CAPTION: Floorplans of apartments with the biggest decreases in predicted rent due to NN output (in 10,000¥)
-[[./assets/overpreds.png]]
-
-** Largest increases
-#+CAPTION: Floorplans of apartments with the biggest increases in predicted rent due to NN output (in 10,000¥)
-[[./assets/underpreds.png]]
