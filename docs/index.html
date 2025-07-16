@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Generated on 2025-07-16 Wed 12:22 -->
+<!-- Generated on 2025-07-16 Wed 13:57 -->
 <meta charset="utf-8"/>
 <title>Empirical Finance - Research Proposal</title>
 <meta name="author" content="Jiyan Schneider"/>
 <style type="text/css">
 .underline { text-decoration: underline; }
 </style>
-<link rel="stylesheet" href="./reveal.js/dist/reveal.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.css"/>
 
-<link rel="stylesheet" href="./reveal.js/dist/theme/serif.css" id="theme"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/serif.css" id="theme"/>
 
 <link rel="stylesheet" href="custom.css"/>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -68,13 +68,13 @@
 </ul>
 
 
-<div id="orgf7ec44b" class="figure">
+<div id="org8d55dc3" class="figure">
 <p><img src="assets/scaling_laws_improvement.jpg" alt="scaling_laws_improvement.jpg" height="200px" />
 </p>
 </div>
 
 <p>
-Taken from (<a href="#citeproc_bib_item_4">Kaplan et al. 2020</a>)
+Taken from Kaplan et al. (<a href="#citeproc_bib_item_4">2020</a>)
 </p>
 </section>
 </section>
@@ -116,7 +116,7 @@ where L is the prediction loss.</li>
 
 <p>
 <img src="assets/Learning predictions.jpg" alt="Learning predictions.jpg" />
-Figure taken from (<a href="#citeproc_bib_item_3">Hoffmann et al. 2022</a>)
+Figure taken from Hoffmann et al. (<a href="#citeproc_bib_item_3">2022</a>)
 </p>
 </section>
 </section>
@@ -218,7 +218,7 @@ This isn&rsquo;t just a theoretical exercise.
 <li>The &ldquo;scaling&rdquo; approach is a proven framework for making progress in complex domains by making it predictable and measurable.</li>
 <li>It has been used to:
 <ul>
-<li>Guide massive investments in Large Language Models. ((<a href="#citeproc_bib_item_4">Kaplan et al. 2020</a>))</li>
+<li>Guide massive investments in Large Language Models. (<a href="#citeproc_bib_item_4">Kaplan et al. 2020</a>)</li>
 <li>Discover optimal model architectures and data-to-model size ratios (<a href="#citeproc_bib_item_3">Hoffmann et al. 2022</a>; <a href="#citeproc_bib_item_2">DeepSeek-AI et al. 2024</a>)</li>
 <li>Achieve breakthroughs in computer vision. (<a href="#citeproc_bib_item_7">Zhai et al. 2022</a>)</li>
 <li>The existence of bad scaling laws with audio cause pessism and leads people to pivot into new research directions (<a href="#citeproc_bib_item_1">Cuervo and Marxer 2024</a>; <a href="#citeproc_bib_item_5">Maimon et al. 2025</a>)</li>
@@ -281,9 +281,9 @@ This isn&rsquo;t just a theoretical exercise.
 
 </aside>
 
-<div class="leftcol" id="org46c18cf">
+<div class="leftcol" id="org2a14a63">
 <p>
-Use the ISOFlop approach (Approach 2 from (<a href="#citeproc_bib_item_3">Hoffmann et al. 2022</a>))
+Use the ISOFlop approach (Approach 2 from Hoffmann et al. (<a href="#citeproc_bib_item_3">2022</a>))
 </p>
 <ul>
 <li><b><b>Define Model Architecture:</b></b>
@@ -292,7 +292,7 @@ Use the ISOFlop approach (Approach 2 from (<a href="#citeproc_bib_item_3">Hoffma
 
 </ul></li>
 <li><b><b>Define Compute Budgets:</b></b></li>
-<li><b><b>Pick compute budget:</b></b> number of FLOPs  E.g., \( \{10^{18}, 10^{19}, 10^{20 }\} \) FLOPs</li>
+<li><b><b>Pick compute budget:</b></b> number of FLOPs  E.g., \( 10^{18}, 10^{19}, 10^{20 } \) FLOPs</li>
 <li><b><b>Model Training &amp; Evaluation:</b></b> Train slighly different models on Slightly different amounts of data, record final loss.</li>
 <li><b><b>Analysis:</b></b> Plot the final loss for each model against its size and estimate the log-log relationship</li>
 <li><b><b>If possible:</b></b> Train a final big model and log-log relationship prediction to actual performance</li>
@@ -301,8 +301,8 @@ Use the ISOFlop approach (Approach 2 from (<a href="#citeproc_bib_item_3">Hoffma
 
 </div>
 </section>
-<section id="slide-org94acf31">
-<h4 id="org94acf31">Transformer mdoel</h4>
+<section id="slide-orgb678f3c">
+<h4 id="orgb678f3c">Transformer mdoel</h4>
 <aside class="notes">
 <ul>
 <li>Studied a lot</li>
@@ -315,17 +315,17 @@ Use the ISOFlop approach (Approach 2 from (<a href="#citeproc_bib_item_3">Hoffma
 </aside>
 
 
-<div id="orgbceb5ac" class="figure">
+<div id="org90fdf49" class="figure">
 <p><img src="assets/transformer_arch.jpg" alt="transformer_arch.jpg" height="460px" />
 </p>
 </div>
 
 <p>
-Figure taken from (<a href="#citeproc_bib_item_6">Vaswani et al. 2017</a>)
+Figure taken from Vaswani et al. (<a href="#citeproc_bib_item_6">2017</a>)
 </p>
 </section>
-<section id="slide-org9248c24">
-<h4 id="org9248c24">Isoflop Curve</h4>
+<section id="slide-orgd57403b">
+<h4 id="orgd57403b">Isoflop Curve</h4>
 <aside class="notes">
 <ul>
 <li>After the experiment is done I want to plot the isocurves like this.</li>
@@ -336,7 +336,7 @@ Figure taken from (<a href="#citeproc_bib_item_6">Vaswani et al. 2017</a>)
 
 <p>
 <img src="assets/isoflop.jpg" alt="isoflop.jpg" />
-Figure taken from Hoffman
+Figure taken from DeepSeek-AI et al. (<a href="#citeproc_bib_item_2">2024</a>)
 </p>
 </section>
 </section>
@@ -390,11 +390,11 @@ Figure taken from Hoffman
 </section>
 </div>
 </div>
-<script src="./reveal.js/dist/reveal.js"></script>
-<script src="./reveal.js/plugin/markdown/markdown.js"></script>
-<script src="./reveal.js/plugin/notes/notes.js"></script>
-<script src="./reveal.js/plugin/search/search.js"></script>
-<script src="./reveal.js/plugin/zoom/zoom.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/plugin/markdown/markdown.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/plugin/search/search.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/plugin/zoom/zoom.js"></script>
 <script>
 // Full list of configuration options available here:
 // https://github.com/hakimel/reveal.js#configuration
