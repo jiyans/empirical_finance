@@ -1,0 +1,134 @@
+#+TITLE: Finding Scaling Laws in Financial Data
+#+SUBTITLE: A Research Proposal for Empirical Finance
+#+AUTHOR: Jiyan Jonas Schneider
+#+EMAIL: jiyan.schneider@keio.jp
+#+DATE: \today
+#+LATEX_HEADER: \usepackage[style=apa]{biblatex}
+#+LATEX_HEADER: \usepackage{setspace}
+#+LATEX_HEADER: \AtBeginDocument{\doublespacing}
+#+LATEX_HEADER: \usepackage[a4paper,left=1.5cm,right=1.5cm,top=2.0cm,bottom=2.0cm]{geometry}
+#+LATEX_HEADER: \usepackage[dvipsnames]{xcolor}
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \usepackage{mdframed}
+#+LATEX_HEADER: \surroundwithmdframed[
+#+LATEX_HEADER:     backgroundcolor=gray!5,
+#+LATEX_HEADER:     roundcorner=4pt,
+#+LATEX_HEADER:     innertopmargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerbottommargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerrightmargin=0.5\baselineskip,
+#+LATEX_HEADER:     innerleftmargin=0.5\baselineskip,
+#+LATEX_HEADER:     linecolor=gray!20,
+#+LATEX_HEADER:     linewidth=0.4pt]{quote}
+#+LATEX_HEADER: \setminted{style=friendly,breaklines=true,fontsize=\small,bgcolor=gray!5}
+#+OPTIONS: toc:nil
+
+* Abstract
+Recent breakthroughs in artificial intelligence have shown that model performance often follows simple *scaling laws*: predictive loss declines as a power-law function of model size, data size, and compute budget [cite:@kaplanScalingLawsNeural2020;@hoffmannTrainingComputeOptimalLarge2022].
+If similar laws exist in quantitative finance, they would let researchers /forecast/ the return on investment from acquiring additional data or compute and would offer a novel quantitative measure of market efficiency (the “irreducible error” term).
+I propose a systematic empirical study that (i) trains a grid of scalable neural networks on large institutional data, (ii) estimates exponents that relate loss to parameters and samples, and (iii) evaluates the economic value of improved forecast accuracy.  The project leverages Keio’s WRDS access for high-frequency TAQ data while leaving room for alternative datasets (e.g., CRSP daily or public crypto order books).  If successful, the work will yield both a practical decision tool for asset managers and a conceptual bridge between machine-learning and asset-pricing literatures.
+
+* 1 Introduction and Motivation
+The past five years have made AI progress *predictable*: once researchers noticed that language-model loss falls roughly as \(L(N,D)\!=\!E_{\text{irred}}+AN^{-\alpha}+BD^{-\beta}\), they could plan multi-million-dollar training runs with high confidence in the outcome [cite:@kaplanScalingLawsNeural2020].  Figure [[fig:kaplan]] illustrates the surprisingly smooth log-log relationship.
+
+#+name: fig:kaplan
+#+CAPTION: Loss vs. model size in language modelling (Kaplan et al. 2020).
+#+ATTR_LATEX: :width 8cm
+[[file:assets/scaling_laws_improvement.jpg]]
+
+Could finance enjoy the same predictability?
+Answering this question matters for at least three reasons:
+
+1. *Capital allocation* – Asset managers routinely face the choice “buy more data or rent more GPUs.”  A fitted scaling law would turn that into a back-of-the-envelope calculation.
+2. *Scientific insight* – The residual \(E_{\text{irred}}\) can be interpreted as a bound on how much predictable structure survives competition; its magnitude would inform debates on market efficiency.
+3. *Research planning* – Knowing the approximate exponent values (\(\alpha,\beta\)) prevents under- or over-scaling of prototypes and shortens development cycles.
+
+*Research question*
+Can we identify stable power-law relationships between predictive loss and (i) model size and (ii) training-data size for a canonical intraday equity-forecasting task?
+
+* 2 Literature Review
+** 2.1 Scaling laws in AI
+Kaplan et al. (2020) first documented the triple power-law in language modelling [cite:@kaplanScalingLawsNeural2020].  Hoffmann et al. (2022) refined the recipe with *isoFLOP* sweeps, showing that Gopher-scale performance can be achieved by a model 4× smaller but trained on 4× more data [cite:@hoffmannTrainingComputeOptimalLarge2022].  Subsequent work extended the phenomenon to vision [cite:@zhaiScalingVisionTransformers2022] and code [cite:@deepseek-aiDeepSeekLLMScaling2024].
+
+** 2.2 Empirical asset pricing & machine learning
+While machine-learning techniques increasingly appear in finance [cite:@guEmpiricalAssetPricing2020], systematic *scaling* studies are rare.  Most papers fix either the architecture or the sample and ask whether ML beats linear factors.  To my knowledge, no study has attempted to fit α/β exponents or to interpret \(E_{\text{irred}}\) as an efficiency bound, leaving a clear gap.
+
+* 3 Data Requirements and Candidate Sources
+Accurately fitting exponents demands *large* and *clean* datasets that let us vary effective sample size over at least an order of magnitude.  The following candidates are available through Keio’s WRDS license; alternative public sources are listed for completeness.
+
+| Dataset (WRDS)          | Horizon | Pros                                       | Cons / Notes                     |
+|-------------------------+---------+--------------------------------------------+----------------------------------|
+| TAQ (NYSE/ NASDAQ)      | ms–sec  | Tick-level depth, 2010-present, equities   | 10–15 TB raw; storage & cleaning |
+| CRSP Daily / Monthly    | 1 d–1 m | Long history (>90 yrs)                     | Fewer observations; coarser grid |
+| OptionMetrics           | 1 d     | Implied-vol surfaces, richer response var. | Licensing cost                   |
+| IBES / Compustat        | q–y     | Fundamentals for macro-forecast task       | Much sparser                     |
+
+*Public alternatives*
+– LOBSTER (paid but smaller),
+– NASDAQ TotalView (non-WRDS feed),
+– Crypto exchanges (Binance spot order book; open-access; 2017–present).
+
+Given class constraints, I intend to start with WRDS *TAQ* because (i) its event count supports wide scaling sweeps and (ii) prior microstructure research offers proven preprocessing scripts.  Should compute or storage become a bottleneck, we can (a) sample fewer symbols, (b) down-sample to 1-second bars, or (c) pivot to publicly available crypto data.
+
+* 4 Methodology
+** 4.1 Prediction task
+Baseline task: predict the signed *mid-price* change over the next 10 s given 60 s of past trades & quotes.  Short horizons reduce non-stationarity and supply millions of samples, but we may experiment with 5-minute or daily horizons to test robustness.
+
+** 4.2 Model family
+We choose a Transformer encoder because it scales smoothly in depth and width and is well-understood in both NLP and financial tick data [cite:@tsantekidis2017forecasting].  Figure [[fig:transformer]] sketches the architecture; positional encodings handle irregular timestamps.
+
+#+name: fig:transformer
+#+CAPTION: Scalable Transformer block for time-series forecasting.
+#+ATTR_LATEX: :width 9cm
+[[file:assets/transformer_arch.jpg]]
+
+To guard against architecture-specific artefacts we will also train:
+
+- linear/logistic regressions (classical benchmark),
+- LSTM or temporal-conv nets (cheap but nonlinear).
+
+** 4.3 Scaling-law estimation protocol
+We adopt the *isoFLOP* procedure of Hoffmann et al. (2022):
+
+1. Pick three total-compute budgets, e.g., \(10^{18},10^{19},10^{20}\) FLOPs.
+2. For each budget train ≈20 models whose parameter count \(N\) and sampled-data size \(D\) vary along the budget line \(C\!\approx\!kND\).
+3. Record out-of-sample loss; fit U-shaped curves (Figure [[fig:isoflop]]) and regress log-loss on log-\(N\) and log-\(D\) to recover \(\alpha,\beta\).
+
+#+name: fig:isoflop
+#+CAPTION: Illustrative isoFLOP curves; minima trace the optimal \(N{:}D\) ratio.
+#+ATTR_LATEX: :width 8cm
+[[file:assets/isoflop.jpg]]
+
+Loss metric will be cross-entropy for classification or MSE for regression; in either case we log-transform when fitting exponents.
+
+** 4.4 Economic evaluation
+Predictive accuracy alone is not sufficient in finance.  We therefore convert model outputs into a simple market-neutral strategy, hold positions for the target horizon, and compute out-of-sample Sharpe ratios.  Tracking Sharpe along the scaling curve shows whether *economic* value also follows a power law or saturates earlier.
+
+* 5 Expected Contributions
+1. *Practical tool* – A fitted equation \(L(N,D)\) lets practitioners ask “Does buying 6 TB more TAQ lower loss more than doubling GPU hours?”
+2. *Theoretical lens* – The asymptote \(E_{\text{irred}}\) could quantify the exploitable component of high-frequency price movements; shifts over time would test adaptive-market hypotheses [cite:@loAdaptiveMarkets2004].
+3. *Open resources* – I plan to release cleaned feature pipelines, training scripts, and the final exponent estimates under an MIT licence.
+
+* 6 Feasibility and Timeline
+The pilot stage limits itself to a single symbol group (e.g., S&P 500 constituents) and a narrow compute grid to verify pipeline integrity.
+
+| Month | Milestone                              |
+|-------+----------------------------------------|
+| 1     | Literature deep-dive; finalize task variants |
+| 2     | Acquire TAQ subset; preprocessing scripts |
+| 3     | Baseline linear & small-model runs        |
+| 4-5   | Full isoFLOP grid; fit scaling exponents  |
+| 6     | Economic back-tests; draft working paper  |
+
+Compute resources will be drawn from Keio’s HPC cluster or modest cloud credits; exact GPU counts depend on implementation details and will be specified in the follow-up paper.
+
+* 7 Limitations and Risk Mitigation
+- *Non-stationarity* – We will use rolling-window validation and, if necessary, time-decay weighting when fitting exponents.
+- *Data quality* – TAQ requires vigorous outlier removal (crossed quotes, split events).  Scripts by [cite:@gorig2019taqclean] will be adapted.
+- *Model dependence* – If Transformer results diverge from LSTM curves, we will report separate exponents and discuss architecture sensitivity.
+- *Storage / cost* – Fallback to public crypto data is pre-approved; this keeps the project viable even if WRDS quotas tighten.
+
+* 8 Conclusion
+This proposal outlines the first systematic search for *scaling laws* in financial prediction.  By translating insights from modern AI into an empirical-finance setting, the study promises both immediate practical value—resource-allocation guidelines—and a fresh theoretical measure of market efficiency.  Given institutional data access and a staged experimental design, the project is feasible within one semester and positions us for a full working paper thereafter.
+
+* References
+#+print_bibliography
